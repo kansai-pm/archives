@@ -1,0 +1,111 @@
+<!-- blosxom content_type text/html; charset=UTF-8 -->
+
+
+<!-- blosxom head -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="$blog_language">
+
+<head>
+	<title>$blog_title$storytitle::page_title</title>
+	<meta http-equiv="Content-Script-Type" content="text/javascript" />
+	<meta http-equiv="Content-Style-Type" content="text/css" />
+	<style type="text/css" media="screen">
+		@import "$theme::theme_dir_url/style/common.css";
+		@import "$theme::theme_dir_url/style/default.css";
+	</style>
+	<link rel="alternate" type="application/rss+xml" title="RSS" href="$url/index.rss" />
+	<link rel="Shortcut Icon" type="image/ico" href="$theme::theme_dir_url/style/images/favicon.ico" />
+	$paging::link_next
+	$paging::link_prev
+	$back_and_forth::link_next
+	$back_and_forth::link_prev
+</head>
+
+<body>
+<div id="header"><a href="$url" title="$blog_title">$blog_title</a></div>
+
+$categories::breadcrumbs
+$paging::navi
+$back_and_forth::navi
+
+<!-- blosxom date -->
+<p class="date">$yr-$mo_num-$da</p>
+
+
+<!-- blosxom story -->
+<div class="entry">
+<h1 class="title"><a id="$fn">$title</a></h1>
+<div class="story">
+$body
+	</div>
+	<p class="postinfo">
+	<a href="$url$path" title="category: $path">$path</a> |
+	<a href="$url$path/$fn.$default_flavour" title="permanent link: $fn">permanent link</a> 
+	(<a href="$url$path/$fn.$default_flavour#writeback" title="writeback: $fn">$writeback::count writeback</a>) |
+	<a href="$url$path/$fn.wikieditish" title="edit: $fn">edit</a>
+	</p>
+	
+	<!--
+	<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	  xmlns:dc="http://purl.org/dc/elements/1.1/"
+	  xmlns:trackback="http://madskills.com/public/xml/rss/module/trackback/">
+	<rdf:Description
+	  rdf:about="$url$path/$fn.$default_flavour"
+	  dc:identifier="$url$path/$fn.$default_flavour"
+	  dc:title="$title"
+	  trackback:ping="$url$path/$fn.trackback" />
+	</rdf:RDF>
+	-->
+</div>
+
+<!-- The wikieditish plug-in's response when saving -->
+<p><br /><a id="wikieditish" class="comments">$wikieditish::response</a></p>
+
+
+<!-- blosxom foot -->
+<div class="entry">
+	<h1 class="title">edit this entry...</h1>
+<div class="story">
+	<form method="post" action="$url/$path_info#wikieditish">
+	<p>
+	<label for="title">Title:</label><br />
+	<input id="title" name="title" size="35" value="$wikieditish::title" tabindex="1" /><br />
+	<label for="body">Body:</label><br />
+	<textarea id="body" name="body" rows="20" cols="80" tabindex="2">$wikieditish::body</textarea><br />
+	<input type="hidden" name="plugin" value="wikieditish" />
+	
+<!-- added by unio for "wikieditish + bookmarklet" -->
+<!-- start -->
+	<br />If you want to send TrackBack ping... 
+	<span class="meta">[<a href="$bookmarklet::script">POST by Bookmarklet</a>]</span><br />
+	</p>
+	<p class="trackback">
+	<label for="excerpt">Excerpt: </label>
+	<span class="meta">(text from here to the ping url)</span><br />
+	<textarea id="excerpt" name="excerpt" rows="4" cols="76" tabindex="3">$foreshortened::body</textarea><br />
+	<label for="ping_url">Ping URLs: </label>
+	<span class="meta">(e.g. http://.../....trackback)</span><br />
+	<textarea id="ping_url" name="ping_url" rows="3" cols="76" tabindex="4">$bookmarklet::ping_url</textarea><br />
+	<input type="hidden" name="reindex" value="y" />
+	<input type="hidden" name="timestamp" value="$wikieditish::timestamp" />
+	</p>
+	<p>
+<!-- end -->
+
+	<label for="password">Password: </label>
+	<input id="password" name="password" size="15" value="$wikieditish::password" type="password" tabindex="5" /> 
+	<input type="submit" value="Save" tabindex="6" />
+	</p>
+	</form>
+</div>
+</div>
+
+
+</body>
+</html>
+
+
+<!-- blosxom bookmarklet -->
+<a href="$bookmarklet::url" title="$bookmarklet::title">$bookmarklet::title</a>
+<blockquote>$bookmarklet::quote</blockquote>

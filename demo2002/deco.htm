@@ -1,0 +1,235 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="ja">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=shift_jis">
+<title>アンケート集計結果(KOF2002)</title>
+</head>
+
+<body>
+
+<h1>関西オープンソース＋フリーウェア2002<br>
+動的デコの作り方</h1>
+
+<p align="right">文責：川合孝典(2002/12/10)</p>
+
+<p>2002年12月6、7日におこなった「関西オープンソース＋フリーウェア2002」で流していたスライドショーの作り方です。</p>
+
+<p>どんなものか知らない人のためのGIFアニメ版がこちら。実際には全画面で表示され、音楽もついています。</p>
+
+<p>&nbsp;<img border="0" src="demo.gif" width="200" height="150"></p>
+
+<p>　</p>
+
+<h2>手順</h2>
+
+<p>作り方自体はとっても簡単です。</p>
+<table border="1" cellspacing="1" width="90%" id="AutoNumber5">
+  <tr>
+    <td width="100%">
+    <ol>
+      <li>MS　PowerPointでスライドを作成し、[ファイル]-[名前を付けて保存]でJPEG形式で保存します。<br>
+      画像を作るだけなのでPowerPointである必要もないのですが、一番てっとり早い方法だろうということで。</li>
+      <li>合いそうな音楽を探します。今回はFree音素材「音楽室」さん(http://www.otosozai.com)の素材を利用しました。</li>
+      <li>下記のPerlスクリプトを作成し、実行。タイミングを考えて、コマを分けたり、時間配分したりというだけです。<br>
+      このセッティングを決めるのが難しいところ。</li>
+    </ol>
+    </td>
+  </tr>
+</table>
+<h3>動的デモのスクリプト</h3>
+<p>ではスクリプトの内容について解説。（というほどのものでもありませんが...）</p>
+<p>全体としてPerl/Tkで画像表示を、Win32::Soundで音楽の演奏を行っています。</p>
+<p>Perl/Tkについての詳細は下記参考資料等をご覧ください。</p>
+<table border="1" cellspacing="1" width="100%" id="AutoNumber6">
+  <tr>
+    <td width="100%">
+<PRE>use strict;
+use Tk;
+use Tk::JPEG;
+use Win32::Sound;
+#--------------------------------------------------------------------
+#メイン
+#--------------------------------------------------------------------
+# soundディレクトリにWAV形式の音楽ファイルを用意
+my @aSnd = ( 'sound/gentei129.wav', '', 'sound/gentei136.wav', '',
+             'sound/wa_002.wav', , '');
+# KOFディレクトリにPowerPointで作成したスライドを保存
+# imgが画像ファイル名、waitは待ち時間(1/1000秒単位)
+my @aImg = (
+    { img => 'KOF/スライド1.jpg',   },
+    { img => 'KOF/スライド2.jpg',  },
+    { img => 'KOF/スライド3.jpg',  },
+    { img => 'KOF/スライド4.jpg',  },
+    { img => 'KOF/スライド5.jpg',  },
+    { img => 'KOF/スライド6.jpg',  },
+    { img => 'KOF/スライド7.jpg',  wait  => 2000, },
+    { img => 'KOF/スライド8.jpg',  wait  => 2000,  },
+    { img => 'KOF/スライド9.jpg',  wait  => 1000,  },
+    { img => 'KOF/スライド10.jpg', wait  => 3000,  },
+    { img => 'KOF/スライド11.jpg', },
+    { img => 'KOF/スライド12.jpg', },
+    { img => 'KOF/スライド13.jpg', },
+    { img => 'KOF/スライド14.jpg', },
+    { img => 'KOF/スライド15.jpg', wait  => 1000, },
+    { img => 'KOF/スライド16.jpg', wait  => 1000,},
+    { img => 'KOF/スライド17.jpg', wait  => 1000,},
+    { img => 'KOF/スライド18.jpg', },
+    { img => 'KOF/スライド19.jpg', wait  => 6000},
+    { img => 'KOF/スライド20.jpg', },
+    { img => 'KOF/スライド21.jpg', },
+    { img => 'KOF/スライド22.jpg', wait  => 2000 },
+    { img => 'KOF/スライド23.jpg', },
+    { img => 'KOF/スライド24.jpg', },
+    { img => 'KOF/スライド25.jpg', wait  => 7000, },
+    { img => 'KOF/スライド26.jpg', wait  => 3000, },
+);
+my @aoImg = ();
+my $iSnd=0;
+my $iPos = 0;
+my $oImg;
+my $oMw = new MainWindow;
+$oMw->geometry('+0+0');
+$oMw->title('DEMO');
+$oMw->FullScreen(1);    #これで全画面表示
+my $oCvs = $oMw->Canvas(
+                -background  => '#402500',
+                -width       => $oMw->width,
+                -height      => $oMw->height,
+                -relief      => 'raised',
+                -borderwidth => 0,
+                -cursor =>'trek',
+        )->grid;
+dispImg();
+MainLoop;
+#--------------------------------------------------------------------
+# 画像ファイルの表示
+#--------------------------------------------------------------------
+sub dispImg() {
+    $oCvs->delete($oImg) if($oImg); #キャンバスからImageを削除
+    $iPos %=scalar(@aImg);          #表示する画像を計算
+
+    if(! defined($aoImg[$iPos])) {  
+        my $oWk = $oMw->Photo(-file => $aImg[$iPos]->{img});
+        $aoImg[$iPos]= $oWk;    
+            #PhotoメソッドでImageを用意、配列に入れておけば一度きり
+    }
+    $oImg = $oCvs->createImage(     #キャンバスにImageを作成
+                ($oMw->width)/2,
+                ($oMw->height)/2,
+                -image => $aoImg[$iPos]);
+    if($iPos == 0) {                #$iPos==0つまり先頭にきたら
+        $iSnd %= scalar(scalar(@aSnd));
+        if($aSnd[$iSnd] ne '') {
+            Win32::Sound::Play($aSnd[$iSnd], SND_ASYNC|SND_LOOP);
+                    #指定されているファイルを演奏開始（非同期、繰り返し）
+        }
+        else {
+            Win32::Sound::Stop; #ファイル名がなければ演奏停止
+        }
+        ++$iSnd;
+    }
+    $oMw->after($aImg[$iPos]->{wait}||5000, \&dispImg);
+                                #指定された時間（デフォルトは5秒）後に
+                                #この関数dispImgを呼び出し
+    ++$iPos;
+}
+</PRE>
+    </td>
+  </tr>
+</table>
+<h3>おまけ：GIFアニメを作成するスクリプト</h3>
+<p>ついでに上記のデモをGIFアニメ化するためのスクリプト。</p>
+<p>Image::Magickを利用すれば、特に難しいところもありません。</p>
+<p>
+唯一気をつけなければならないことは今回のJPEGファイルは大きなものだったので、先に小さく変換してからでないとメモリを圧迫してしまうということぐらいでしょうか。</p>
+<table border="1" cellspacing="1" width="100%" id="AutoNumber6">
+  <tr>
+    <td width="100%">
+<PRE>use strict;
+use Image::Magick;
+my @aImg = (
+    { img => 'KOF/スライド1.jpg',   },
+    { img => 'KOF/スライド2.jpg',  },
+    { img => 'KOF/スライド3.jpg',  },
+    { img => 'KOF/スライド4.jpg',  },
+    { img => 'KOF/スライド5.jpg',  },
+    { img => 'KOF/スライド6.jpg',  },
+    { img => 'KOF/スライド7.jpg',  wait  => 2000, },
+    { img => 'KOF/スライド8.jpg',  wait  => 2000,  },
+    { img => 'KOF/スライド9.jpg',  wait  => 1000,  },
+    { img => 'KOF/スライド10.jpg', wait  => 3000,  },
+    { img => 'KOF/スライド11.jpg', },
+    { img => 'KOF/スライド12.jpg', },
+    { img => 'KOF/スライド13.jpg', },
+    { img => 'KOF/スライド14.jpg', },
+    { img => 'KOF/スライド15.jpg', wait  => 1000, },
+    { img => 'KOF/スライド16.jpg', wait  => 1000,},
+    { img => 'KOF/スライド17.jpg', wait  => 1000,},
+    { img => 'KOF/スライド18.jpg', },
+    { img => 'KOF/スライド19.jpg', wait  => 6000},
+    { img => 'KOF/スライド20.jpg', },
+    { img => 'KOF/スライド21.jpg', },
+    { img => 'KOF/スライド22.jpg', wait  => 2000 },
+    { img => 'KOF/スライド23.jpg', },
+    { img => 'KOF/スライド24.jpg', },
+    { img => 'KOF/スライド25.jpg', wait  => 7000, },
+    { img => 'KOF/スライド26.jpg', wait  => 3000, },
+);
+#1.画像を幅:200、高さ:150に縮小し、gifで出力
+my $rhImg;
+my $i=0;
+foreach $rhImg (@aImg) {
+    my $oImg = Image::Magick->new;
+    $oImg->Read($rhImg->{img});
+    $oImg->Resize('200x150');
+    $oImg->Write(sprintf('KOF/slide%02d.gif', ++$i));
+}
+#2.そのファイルをまとめてGIFアニメ化
+my $iDly;
+my $oImg = Image::Magick->new;
+$i=0;
+#2.1 loopで繰り返しを設定
+$oImg->Set(loop =>-1);
+foreach my $rhImg (@aImg) {
+    $oImg->Read(sprintf('KOF/slide%02d.gif', ++$i));
+    $iDly = $rhImg->{wait};
+    $iDly||=3000;   #本物よりも時間をちょっと短めに設定
+    $iDly/=10;      #GIFアニメでは1/100秒単位
+    #2.2　delayで移り変わるタイミングを調整
+    $oImg->[$i-1]->Set(delay=>$iDly);
+}
+$oImg->Write('demo.gif');
+</PRE>
+    </td>
+  </tr>
+</table>
+
+<h3>参考資料：</h3>
+<dl>
+  <dt>Perl/Tk： </dt>
+  <dd> <a href="http://members10.tsukaeru.net/bitwalk/perltk.html">
+http://members10.tsukaeru.net/bitwalk/perltk.html</a> </dd>
+  <dt>　</dt>
+  <dt>入門Perl/Tk：同じタイトルの本が別の出版社からも出ていますが、私的にはこれ </dt>
+  <dd>
+  <a href="http://www.shuwasystem.co.jp/books/wwwsrch/cgi-bin/content/943/index.htm">
+  http://www.shuwasystem.co.jp/books/wwwsrch/cgi-bin/content/943/index.htm</a>
+  </dd>
+  <dt>　</dt>
+  <dt>Win32::Sound： </dt>
+  <dd><a href="http://search.cpan.org/author/ACALPINI/Win32-Sound-0.45/">
+  http://search.cpan.org/author/ACALPINI/Win32-Sound-0.45/</a> </dd>
+  <dd><a href="http://member.nifty.ne.jp/hippo2000/perltips/sound.htm">
+  http://member.nifty.ne.jp/hippo2000/perltips/sound.htm</a></dd>
+  <dt>　</dt>
+  <dt>Image::Magick(PerlMagick)：ImageMagickのPerlインターフェースについての説明</dt>
+  <dd><a href="http://www.imagemagick.org/www/perl.html">
+  http://www.imagemagick.org/www/perl.html</a> </dd>
+</dl>
+
+</body>
+
+</html>

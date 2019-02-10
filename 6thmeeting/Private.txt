@@ -1,0 +1,25 @@
+Private.pm
+シンボルテーブル操作によるサブルーチン隠蔽
+
+2006/3/19
+Kansai.pm第6回ミーティング
+中島 靖
+nakajima@netstock.co.jp
+
+
+Private.pmとは
+
+モジュール内だけで使うサブルーチンを隠す
+
+  # Foo.pm
+  package Foo;
+  use Private;
+  hide Private;
+  sub _private { print "private\n"; }
+  sub public { _private(); }
+
+  # test.pl
+  use Foo;
+  Foo::public();   # OK
+  Foo::_private(); # ERROR
+

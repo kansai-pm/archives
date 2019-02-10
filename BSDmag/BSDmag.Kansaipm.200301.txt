@@ -1,0 +1,29 @@
+//i Perl Mongers短信
+
+中島 靖
+nakajima@netstock.co.jp
+http://kansai.pm.org/
+
+//ii Kansai Perl Mongers
+
+//iii 関西オープンソース+フリーウェア2002続報
+
+　12月6、7日「関西オープンソース+フリーウェア2002」//ky1にブース出展。ブースでは川合さんの力作によるKansai.pmマスコットの巨大トラネコのポスターや、Perl/TkによるKansai.pm紹介自動プレゼンテーションが目を引きました。また、その場で撮影した顔写真入りアンケート用紙によるPerl度アンケートをどんどん貼りだして雰囲気を盛り上げました。
+　「必要に迫られてPerlを使っているが行き詰まったときに尋ねられる人が身近にいない」「CPANで自分の求めるライブラリモジュールがなかなかうまく見つけられない」といった悩みが多く出され、日本のPerlコミュニティの充実と日本語によるPerl関連情報の整理集約の必要性が浮き彫りなりました。
+　バッジ、シール、オリジナルCDといったKansai.pmグッズを販売し、経費を除いた売上をPerl6開発費用としてPerl Foundation//ky2に寄付しました。
+　また、中島がPDF生成モジュールPDFJについてステージ発表。XMLライクなフォーマットでレイアウト指示を埋め込んだ原稿を用意すればPDFに変換してくれるモジュールXPDFJの構想についての解説とデモをおこないました。//ky3
+
+//iii XSLT、Acme::EyeDrops、SOAP::Lite、||=
+
+　メーリングリストでの最近の話題から…。Perl5.005でXSLTの日本語の取り扱いをうまくやる方法。スクリプトを文字絵化するモジュールAcme::EyeDropsにKansai.pmマスコットのトラネコの絵柄パターンが収録された。SOAP::LiteでencodingStyleをhttp://xml.apache.org/xml-soap/literalxmlにするにはどうすればよいか。「$FORM{EMAIL} ||= $SENDFROM;」ってどういう意味？
+
+//iii ぼたん鍋、OpenEdu、Kansai.pm3周年
+
+　今後のイベント予定としては…2月にぼたん鍋合宿。3月22日に開催されるOpenEdu//ky4の第4回イベントへの参加。4月にはKansai.pm3周年イベントを関東からのゲストスピーカーを迎えて中味も規模も充実させようと計画中です。
+
+//ky{
+//ky1 http://of.good-day.net/
+//ky2 http://www.perl-foundation.org/
+//ky3 http://hp1.jonex.ne.jp/~nakajima.yasushi/
+//ky4 http://www.openedu.org/ja/
+//ky}

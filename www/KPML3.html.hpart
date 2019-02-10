@@ -1,0 +1,34 @@
+<style type="text/css">
+<!--
+.normallf {line-height: 150%}
+-->
+</style>
+<script language="javascript"><!--
+function showmsg(msg) {
+  document.all["MsgLayer"].innerHTML = "<p>"+msg+"</p>";
+}
+var incapture = 0;
+function capture() {
+  if( incapture ) {
+    alert("‚·‚Å‚Éˆ—’†‚Å‚·i“ñ“x‰Ÿ‚µ‚µ‚È‚¢‚Å‚­‚¾‚³‚¢j");
+  } else {
+    incapture = 1;
+    showmsg("ŽB‰eˆ—’†c");
+    window.location.href = "KPML3.cgi?job=capture&imgname=capture";
+  }
+}
+var inprint = 0;
+function printout() {
+  if( noprint ) {
+    alert("‚Ü‚¸ŽB‰e‚µ‚Ä‚­‚¾‚³‚¢");
+    return;
+  }
+  if( inprint ) {
+    alert("‚·‚Å‚Éˆ—’†‚Å‚·i“ñ“x‰Ÿ‚µ‚µ‚È‚¢‚Å‚­‚¾‚³‚¢j");
+  } else {
+    inprint = 1;
+    showmsg("ˆóüˆ—’†c");
+    window.location.href = "KPML3.cgi?job=printout&docname=KPML3";
+  }
+}
+//--></script>

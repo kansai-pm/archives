@@ -1,0 +1,5 @@
+シンプルテンプレートテスト%[my($title, $time, $data) = @Argv]%
+%[my($hour) = $time =~ / (\d+):/]%%[if($hour < 11)]%おはようございます%[end]%
+== $[$title]$ == ($[$time]$)
+%[for my $row(@$data)]%%[for my $data(@$row)]%$[sprintf("%5s",$data)]$%[end]%
+%[end]%== 終わり ==

@@ -1,0 +1,157 @@
+Kansai Perl Mongers
+関西オープンソース+フリーソフトウェア2002 会場アンケート
+アンケート用紙印刷システム の概要
+
+2002年12月6日
+中島 靖
+<nakajima@netstock.co.jp>
+
+【構成】-----------------------------------------------------------------------
+
+○ハードウェア
+
+Samsung NV5000（192MB RAM）
+Creative WebCAM Pro eX
+Cannon PIXUS 950i
+
+○ソフトウェア
+
+Windows Me
+AN HTTP Daemon 1.40d
+Internet Explorer 5.5 SP2
+Creative PC-CAM Center 1.30.05
+Microsoft Word 2002 SP1
+ActivePerl 5.6.1.633
+
+※Perlモジュール
+Win32::OLE
+Win32::GuiTest
+CGI
+
+【動作】-----------------------------------------------------------------------
+
+インタフェースはHTMLとJavaScriptで書かれており、ローカルにHTTPDを走らせておいて、Internet Explorerで表示している。
+
+○撮影
+
+準備として、PC-CAM Centerを起動して撮影が可能な状態にしておく。
+CGIスクリプトから、Win32::GuiTestモジュールを使用して、PC-CAM Centerに撮影のショートカットキーを送る。
+撮影された画像を所定のパスへ移動する。
+
+○印刷
+
+アンケート用紙はWord文書として作られている。撮影画像は所定のパスにあるファイルへのリンクとして組み込まれている。
+CGIスクリプトから、Win32::OLEモジュールを使用して、Wordオブジェクトを開き、アンケート用紙文書オブジェクトを開き、印刷し、閉じる。
+
+【CGIソース】------------------------------------------------------------------
+
+# KPML3.cgi
+# 2002 <nakajima@netstock.co.jp>
+use Win32::GuiTest qw(FindWindowLike SetForegroundWindow SendKeys);
+use Win32::OLE;
+use CGI;
+use strict;
+
+$| = 1;
+main(CGI->new);
+
+sub main {
+	my($cgi) = @_;
+	my $job = $cgi->param('job');
+	if( $job eq 'capture' ) {
+		do_capture($cgi);
+	} elsif( $job eq 'printout' ) {
+		do_printout($cgi);
+	} else {
+		result($cgi, 'Shift_JIS', 'エラー', 
+			"unknown job: $job", undef, 'back()');
+	}
+}
+	
+sub do_capture {
+	my($cgi) = @_;
+	my $url = $cgi->url;
+	my $imgname = $cgi->param('imgname');
+	my $imgfile = "$imgname.jpg";
+	if( capture($imgfile) ) {
+		my $imgurl = $url;
+		$imgurl =~ s/[^\/]+$/$imgfile/;
+		result($cgi, 'Shift_JIS', '撮影結果', 
+			'撮影しました', $imgurl, 'KPML3p.shtml');
+	} else {
+		result($cgi, 'Shift_JIS', '撮影結果', 
+			'撮影画像を取り込めませんでした', undef, 'KPML3.shtml');
+	}
+}
+
+sub do_printout {
+	my($cgi) = @_;
+	my $file = $cgi->param('docname') . '.doc';
+	unless( -f $file ) {
+		result($cgi, 'Shift_JIS', 'エラー', 
+			'雛形文書ファイルがありません', undef, 'back()');
+		exit;
+	}
+	printout($file) ?
+		result($cgi, 'Shift_JIS', '印刷中', 
+		'印刷が終わったらOKボタンをクリックしてください<br>印刷されたアンケート用紙に記入して係にお渡しください<br>ありがとうございました', undef, 'KPML3.shtml') :
+		result($cgi, 'Shift_JIS', 'エラー', 
+			'Wordがオープンできない', undef, 'back()');
+}
+
+sub printout {
+	my($file) = @_;
+	my $wd = 
+		Win32::OLE->GetActiveObject("Word.Application") ||
+		Win32::OLE->new("Word.Application", sub {$_[0]->Quit;} ) or return 0;
+	my $doc = $wd->Documents->Open($file);
+	$doc->PrintOut;
+	$doc->Close;
+	# $wd->Close;
+	return 1;
+}
+
+sub capture {
+	my($imgfile) = @_;
+	my $capturefile = 'c:\Media\Photo\ﾏｲ ｱﾙﾊﾞﾑ\Image001.jpg';
+	unlink $capturefile;
+	my($window) = FindWindowLike(0, "^PC-CAM Center");
+	return unless $window;
+	SetForegroundWindow($window);
+	SendKeys("%p");
+	sleep(5);
+	my $result = 0;
+	if( -s $capturefile ) {
+		my $dir = $0;
+		$dir =~ s/[^\/]+$//;
+		rename($capturefile, "$dir$imgfile");
+		$result = 1;
+	}
+	$result;
+}
+
+sub result {
+	my($cgi, $charset, $title, $msg, $imgurl, $url) = @_;
+	my $imgtag = $imgurl ? "<img src=\"$imgurl\">" : "";
+	my $onclick = 
+		$url eq 'close()' ? 'if(opener)opener.location.reload();window.close()' :
+		$url eq 'back()' ? 'history.back()' :
+		$url ? "window.location.href = '$url'" : 
+		'history.back()';
+	print $cgi->header(-type => 'text/html', -charset => $charset, -expires => 'now', -Pragma => 'no-cache', -Cache-Control => 'no-cache');
+	print <<END;
+<html><head>
+<title>$title</title>
+<meta http-equiv="Content-Type" content="text/html; charset=$charset">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Cache-Control" content="no-cache">
+</head>
+<body bgcolor="white">
+<p>$msg</p>
+$imgtag
+<form action="" method="GET">
+<input type="button" value="OK" onclick="$onclick">
+</form>
+</body></html>
+END
+}

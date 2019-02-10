@@ -1,0 +1,75 @@
+<HTML>
+<HEAD>
+<TITLE></TITLE>
+</HEAD>
+<BODY>
+<H1>package.pl</H1>
+<PRE>
+#!/usr/bin/perl
+
+package main;
+
+$bar = '$bar is in main package';
+
+{
+  package hoge;
+
+  $bar = '$bar is in hoge package';
+  print $bar,"\n";
+}
+{
+  package hoo;
+
+  $bar = '$bar is in hoo package';
+  print $bar,"\n";
+}
+
+print $bar;
+};
+</PRE>
+<HR>
+<H1>module_test.pl</H1>
+<PRE>
+#!/usr/bin/perl
+
+use Character;
+use strict;
+
+my $one = Character->new;
+my $another = Character->new;
+
+$one->named('atsushi');
+$another->named('akira');
+
+print $one->whoami;
+print "\n";
+print $another->whoami;
+</PRE>
+<HR>
+<H1>Character.pm</H1>
+<PRE>
+package Character;
+
+use strict;
+
+sub new{
+  my $class = shift;
+  my $object = bless {}, $class;
+  return $object;
+}
+
+sub named{
+  my $self = shift;
+  $self->{name} = shift;
+}
+
+sub whoami{
+  my $self = shift;
+  return $self->{name};
+}
+
+1;
+
+</PRE>
+</BODY>
+</HTML>

@@ -1,0 +1,14 @@
+<HTML>
+<HEAD>
+<!--MadeByWZ-->
+<TITLE>アンケート受付</TITLE>
+<script language="javascript"><!--
+var noprint = 0;
+//--></script>
+<!--#include file="KPML3.html.hpart"-->
+</HEAD>
+<BODY BGCOLOR="white">
+<!--#include file="KPML3.html.bpart"-->
+<div id="Layer5" style="position:absolute; width:164px; height:123px; z-index:4; left: 125px; top: 420px"><img name="capimg" src="capture.jpg" width="160" height="120"></div>
+</BODY>
+</HTML>

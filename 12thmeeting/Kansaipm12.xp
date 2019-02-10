@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="x-sjis-cp932"?>
+<XPDFJ version="0.1">
+<do file="kof2002.inc" version="1.6" boldfont="dfgoteb.ttc:0"/>
+
+<alias tag="RED" aliasof="S" color="#ff0000"/>
+
+<def tag="Header">
+  <return>
+  <NewBlock/>
+  <P tstyle="$TStyle{pagetitle}" pstyle="$PStyle{pagetitle}">
+    <Outline title="$Args{title}"/>
+    <T>$Args{title}</T>
+  </P>
+  <HR width="720" size="2" color="#770000"/>
+  <SKIP skip="10"/>
+  </return>
+</def>
+
+<TStyle setvar="$TStyle{nombre}" font="$Font{normal}" fontsize="15"/>
+<clone setvar="$PStyle{nombre}" caller="$PStyle{default}" align="e"/>
+<def tag="Nombre">
+  <eval>$Args{_pagenum} = $Args{page}->pagenum;</eval>
+  <Paragraph style="$PStyle{nombre}">
+    <text><Text style="$TStyle{nombre}" texts="$Args{_pagenum}"/></text>
+    <call>
+      <show page="$Args{page}" x="75" y="45" align="ml"/>
+    </call>
+  </Paragraph>
+</def>
+
+<alias tag="Note" aliasof="P" pstyle="$PStyle{note}" tstyle="$TStyle{note}"/>
+
+<alias tag="Code" aliasof="P" pstyle="$PStyle{code}" foreachline="1"/>
+
+<def tag="CodeBlock">
+  <return>
+    <TABLE cellwidth="100%" cellpadding="5" cellbox="sf" cellboxstyle="fillcolor:#ffffff" preskip="5" postskip="5"><TR><TD><Code>$Args{contents}</Code></TD></TR></TABLE>
+  </return>
+</def>
+
+<new_image setvar="$Image{bgimg}" src="bg12.jpg" pxwidth="2362" pxheight="1669" width="842" height="595"/>
+
+<Block direction="V">
+  <style><BStyle/></style>
+  <objects>
+
+<SKIP skip="100"/>
+<P tstyle="$TStyle{whitebigtitle}" pstyle="$PStyle{bigtitle}">
+PDFJで作図～石畳と蛇腹
+</P>
+<P tstyle="$TStyle{whitesmalltitle}" pstyle="$PStyle{smalltitle}">
+中島 靖（Kansai.pm、(株)ネットストック）
+&lt;nakajima@netstock.co.jp&gt;
+</P>
+<P tstyle="$TStyle{whitesmalltitle}" pstyle="$PStyle{smalltitle}">
+2010年5月1日
+Kansai.pm 第12回ミーティング
+</P>
+
+<Header title="はじめに"/>
+<P>
+PDF生成モジュールPDFJの応用例として、文書作成でなく作図に利用した例を二つ紹介
+</P>
+<P>
+Perlで座標計算して作図しPDFで出力したい
+なぜPerl? 
+</P>
+<UL label="→"><MLI>
+  使い慣れてるから(^^)
+</MLI></UL>
+<P>
+なぜPDF? 
+</P>
+<UL label="→"><MLI>
+  単なる画像ファイルでは正しいスケールでの印刷が期待できない
+</MLI></UL>
+<UL label="→"><MLI>
+  PDFの作図命令で作図すればDXFなどに変換してドロー系ソフトに持って行ける
+</MLI></UL>
+
+<Header title="敷石・積石パターン生成"/>
+<P>
+http://www.stillberg.com/Pave/Pave.html
+</P>
+<UL><MLI>
+鉄道模型や建築模型などで使う、敷石（石畳）や積石（レンガ壁）のパターンを生成
+いろいろな石の並べ方・積み方や、縮尺などを指定
+石や目地の色や影も付けて、印刷して使用
+白黒のパターンとして生成し、UV硬化樹脂で型を作るのに使用
+石の枠線のみ描画し、DXFに変換してプロッタで使用
+</MLI></UL>
+
+<Header title="敷石・積石パターン生成～プログラムのポイント"/>
+<UL><MLI>
+PDFJのShape（図形オブジェクト）のbox,circle,polygonを使用
+目地の色はまずページ全体にboxで塗り、ランダムな汚しはcircleで
+石の角の座標を計算しpolygonで描画
+</MLI></UL>
+<UL><MLI>
+単純にページ全体に全ての石を描画すると、サイズが大きくなり、表示も非常に遅くなる
+</MLI></UL>
+<UL label="→"><MLI>
+  minipage内にひとまとまりのパターンを生成し、それを繰り返しページに配置することで、軽量化と高速化を図っている
+</MLI></UL>
+<UL label="→"><MLI>
+  PDFJのminipageは、矩形の領域にページのようにテキスト・画像・図形を配置でき、それ自体をページの任意の位置に繰り返し配置できる（PDFの「フォームXobject」として実装）
+</MLI></UL>
+
+<Header title="カメラ蛇腹作成"/>
+<P>
+http://www.stillberg.com/bellows/bellows.html
+</P>
+<UL><MLI>
+クラシックカメラや大・中判カメラで使用される蛇腹（ベローズ）を自作するために作図する
+手で作図するのでは狂いが生じやすいため
+DXFに変換してプロッタで使用
+</MLI></UL>
+
+  </objects>
+  <call>
+    <break sizes="$Doc{Bodyheight}">
+      <call>
+        <new_page caller="$Doc" setvar="$page" trans="1,Wipe,90"/>
+        <eval>$pagenum = $page->pagenum; print "page$pagenum\n"</eval>
+        <Shape>
+          <call>
+            <do if="$Args{forprint} ? $page->pagenum == 1 : $page->pagenum >= 1">
+              <show page="$page" caller="$Image{bgimg}" x="0" y="0" align="bl"/>
+            </do>
+            <do if="$page->pagenum > 1">
+              <box x="0" y="0" w="782" h="535" spec="fr10" style="linewidth:2; strokecolor:#000077; fillcolor:#f0f8ff"/>
+            </do>
+            <show page="$page" x="30" y="30" align="bl"/>
+          </call>
+        </Shape>
+        <show page="$page" x="$Doc{Bodyleft}" y="$Doc{Bodytop}" align="tl"/>
+        <Nombre page="$page"/>
+      </call>
+    </break>
+  </call>
+</Block>
+
+<do if="$Args{forprint}">
+  <eval>
+    $Args{outfile} =~ s/\.pdf$/.p.pdf/i;
+  </eval>
+</do>
+<print file="$Args{outfile}"/>
+
+</XPDFJ>

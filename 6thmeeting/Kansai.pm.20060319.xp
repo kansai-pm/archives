@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="x-sjis-cp932"?>
+<XPDFJ version="0.1">
+<do file="kof2002.inc" version="1.6" boldfont="HiraKakuProW6.otf"/>
+
+<alias tag="RED" aliasof="S" color="#ff0000"/>
+
+<def tag="Header">
+  <return>
+  <NewBlock/>
+  <P tstyle="$TStyle{pagetitle}" pstyle="$PStyle{pagetitle}">
+    <Outline title="$Args{title}"/>
+    <T>$Args{title}</T>
+  </P>
+  <HR width="720" size="2" color="#770000"/>
+  <SKIP skip="10"/>
+  </return>
+</def>
+
+<TStyle setvar="$TStyle{nombre}" font="$Font{normal}" fontsize="15"/>
+<clone setvar="$PStyle{nombre}" caller="$PStyle{default}" align="e"/>
+<def tag="Nombre">
+  <eval>$Args{_pagenum} = $Args{page}->pagenum;</eval>
+  <Paragraph style="$PStyle{nombre}">
+    <text><Text style="$TStyle{nombre}" texts="$Args{_pagenum}"/></text>
+    <call>
+      <show page="$Args{page}" x="75" y="45" align="ml"/>
+    </call>
+  </Paragraph>
+</def>
+
+<alias tag="Note" aliasof="P" pstyle="$PStyle{note}" tstyle="$TStyle{note}"/>
+
+<alias tag="Code" aliasof="P" pstyle="$PStyle{code}" foreachline="1"/>
+
+<def tag="CodeBlock">
+  <return>
+    <TABLE cellwidth="100%" cellpadding="5" cellbox="sf" cellboxstyle="fillcolor:#ffffff" preskip="5" postskip="5"><TR><TD><Code>$Args{contents}</Code></TD></TR></TABLE>
+  </return>
+</def>
+
+<new_image setvar="$Image{bgimg}" src="img_0412.jpg" pxwidth="2272" pxheight="1704" width="842" height="595"/>
+
+<Block direction="V">
+  <style><BStyle/></style>
+  <objects>
+
+<SKIP skip="100"/>
+<P tstyle="$TStyle{whitebigtitle}" pstyle="$PStyle{bigtitle}">
+Private.pm
+シンボルテーブル操作によるサブルーチン隠蔽
+</P>
+<P tstyle="$TStyle{whitesmalltitle}" pstyle="$PStyle{smalltitle}">
+中島 靖（Kansai.pm、(株)ネットストック）
+&lt;nakajima@netstock.co.jp&gt;
+</P>
+<P tstyle="$TStyle{whitesmalltitle}" pstyle="$PStyle{smalltitle}">
+2006年3月19日
+Kansai.pm 第6回ミーティング
+</P>
+
+<Header title="Private.pmとは"/>
+<P>
+モジュール内だけで使うサブルーチンを隠す
+</P>
+<CodeBlock>
+<![CDATA[
+  # Foo1.pm
+  package Foo;
+  use Private;
+  hide Private;
+  sub public { _private(); }
+  sub _private { print "OK\n"; }
+]]>
+</CodeBlock>
+<CodeBlock>
+<![CDATA[
+  # test1.pl
+  use Foo1;
+  Foo::public();   # OK
+  Foo::_private(); # ERROR
+]]>
+</CodeBlock>
+
+<Header title="Private.pmとは"/>
+<P>
+デフォルトではアンダースコアで始まるものだが、指定もできる
+</P>
+<CodeBlock>
+<![CDATA[
+  hide Private qw(foo bar ^xx);
+]]>
+</CodeBlock>
+<Note>
+名前または正規表現で指定
+</Note>
+
+<Header title="Private.pmとは"/>
+<P>
+メソッドとして呼ぶ場合はそのモジュール内でもダメ
+</P>
+<CodeBlock>
+<![CDATA[
+  # Foo2.pm
+  package Foo;
+  use Private;
+  hide Private;
+  sub public { Foo->_private(); }
+  sub _private { print "OK\n"; }
+]]>
+</CodeBlock>
+<CodeBlock>
+<![CDATA[
+  # test2.pl
+  use Foo2;
+  Foo->public();   # ERROR
+  Foo->_private(); # ERROR
+]]>
+</CodeBlock>
+<Note>
+メソッドでない下請けサブルーチンをメソッドして呼んでしまうミスを防げる
+</Note>
+
+<Header title="仕組み"/>
+<P>
+対象の名前をパッケージのシンボルテーブルから取り除いているだけ
+</P>
+<P>
+パッケージFooのシンボルテーブルは%Foo::
+</P>
+<CodeBlock>
+<![CDATA[
+# showFoo.pl
+use Foo1;
+for my $name(sort keys %Foo::) {
+　print "$name => $Foo::{$name}\n";
+}
+]]>
+</CodeBlock>
+<CodeBlock>
+<![CDATA[
+delete $Foo::{_private};
+]]>
+</CodeBlock>
+<CodeBlock>
+<![CDATA[
+sub hide {
+　my($me, @symbols) = @_;
+　push @symbols, '^_' unless @symbols;
+　my $pattern = join '|', map {/\W/ ? $_ : "^$_\$"} @symbols;
+　my $pkg = caller;
+　no strict 'refs';
+　for(keys %{"${pkg}::"}) { 
+　　if( /$pattern/ ) {
+　　　*{"Private::${pkg}::$_"} = ${"${pkg}::"}{$_};
+　　　delete ${"${pkg}::"}{$_};
+　　}
+　}
+}
+]]>
+</CodeBlock>
+
+<Header title="仕組み"/>
+<P>
+なぜそのモジュール内では呼べるのか？
+</P>
+<UL label="→"><MLI>
+	コンパイル時に名前の参照が解決されて実体への参照になっているから
+</MLI></UL>
+<P/>
+<P>
+なぜそのモジュール内でもメソッドして呼ぶとダメなのか？
+</P>
+<UL label="→"><MLI>
+	メソッド呼び出しは実行時に名前の検索がおこなわれるから
+</MLI></UL>
+<P/>
+<P>
+したがって、Perlの内部動作に依存した仕組みと言える
+</P>
+
+<Header title="その他の機能"/>
+<P>
+戻すためのshowも用意されている
+</P>
+<CodeBlock>
+<![CDATA[
+  # Foo3.pm
+  package Foo;
+  use Private;
+  hide Private;
+  sub public { local(%Foo::); show Private; Foo->_private(); }
+  sub _private { print "OK\n"; }
+]]>
+</CodeBlock>
+<CodeBlock>
+<![CDATA[
+  # test3.pl
+  use Foo3;
+  Foo::public();   # OK
+  Foo::_private(); # ERROR
+]]>
+</CodeBlock>
+
+<Header title="その他の機能"/>
+<P>
+実は変数も対象になる
+</P>
+<Note>
+ただし外から隠した変数を使うとエラーにはならずに作られてしまう
+</Note>
+<CodeBlock>
+<![CDATA[
+  # Foo4.pm
+  package Foo;
+  use Private;
+  hide Private;
+  $_private = 'OK';
+  sub public { print $_private; }
+]]>
+</CodeBlock>
+<CodeBlock>
+<![CDATA[
+  # test4.pl
+  use Foo4;
+  Foo::public();        # OK
+  print $Foo::_private; # 
+]]>
+</CodeBlock>
+<Note>
+この目的にはモジュールファイルレベルのMy変数を使えばよい
+</Note>
+
+<Header title="おまけ～最近のPDFJ"/>
+<P>
+新機能
+</P>
+<UL><MLI>
+OpenTypeフォント対応
+フォーム機能
+</MLI></UL>
+<P/>
+<P>
+作業中
+</P>
+<UL><MLI>
+注釈
+PNG対応
+JIS X 0213対応
+</MLI></UL>
+<P/>
+<P>
+いつのことやら…
+</P>
+<UL><MLI>
+中国語、韓国語対応
+SVG
+MathML
+</MLI></UL>
+
+
+  </objects>
+  <call>
+    <break sizes="$Doc{Bodyheight}">
+      <call>
+        <new_page caller="$Doc" setvar="$page" trans="1,Wipe,90"/>
+        <eval>$pagenum = $page->pagenum; print "page$pagenum\n"</eval>
+        <Shape>
+          <call>
+            <do if="$Args{forprint} ? $page->pagenum == 1 : $page->pagenum >= 1">
+              <show page="$page" caller="$Image{bgimg}" x="0" y="0" align="bl"/>
+            </do>
+            <do if="$page->pagenum > 1">
+              <box x="0" y="0" w="782" h="535" spec="fr10" style="linewidth:2; strokecolor:#000077; fillcolor:#f0f8ff"/>
+            </do>
+            <show page="$page" x="30" y="30" align="bl"/>
+          </call>
+        </Shape>
+        <show page="$page" x="$Doc{Bodyleft}" y="$Doc{Bodytop}" align="tl"/>
+        <Nombre page="$page"/>
+      </call>
+    </break>
+  </call>
+</Block>
+
+<do if="$Args{forprint}">
+  <eval>
+    $Args{outfile} =~ s/\.pdf$/.p.pdf/i;
+  </eval>
+</do>
+<print file="$Args{outfile}"/>
+
+</XPDFJ>

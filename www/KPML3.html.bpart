@@ -1,0 +1,39 @@
+<div id="Layer1" style="position:absolute; width:649px; height:39px; z-index:1; top: 11px; left: 180px"> 
+  <p align="center"><font face="ＭＳ Ｐゴシック, Osaka" size="5">Kansai Perl Mongers<br>
+    関西オープンソース+フリーソフトウェア2002 会場アンケート<br>
+    アンケート用紙印刷システム</font> </p>
+</div>
+<div id="Layer2" style="position:absolute; width:632px; height:115px; z-index:2; left: 190px; top: 99px"> 
+  <p class="normallf">アンケートへのご協力ありがとうございます。<br>
+    <b>次の手順でアンケート用紙を印刷し、その用紙に手書きで記入してください。</b>（大勢の方に記入していただきたいので、画面上での回答記入はおこないません。）<br>
+    <b>①撮影</b>：カメラに向かってお好きな表情で、「撮影」ボタンをクリックしてください。しばらくすると撮影された画像が表示されるので、「OK」をクリックしてください。何度でも撮影できます。<br>
+    <b>②印刷</b>：気に入った写真が撮影できたら、「印刷」ボタンをクリックしてください。<br>
+    <b>③終了</b>：用紙の印刷が終わったら「OK」をクリックしてください。最初の画面に戻ります。 </p>
+</div>
+<div id="Layer3" style="position:absolute; width:627px; height:49px; z-index:5; left: 190px; top: 270px"> 
+  <form name="form1" method="post" action="KPML3.cgi">
+    <input type="hidden" name="job" value="none">
+    <input type="hidden" name="docname" value="KPML3">
+    <input type="hidden" name="imgname" value="capture">
+    <table width="100%" border="0">
+      <tr>
+        <td align="center"> 
+          <img src="capturebutton.jpg" border=0 onclick="capture()">
+        </td>
+        <td align="center"> 
+          <img src="printbutton.jpg" border=0 onclick="printout()">
+        </td>
+      </tr>
+    </table>
+    </form>
+</div>
+<div id="MsgLayer" style="position:absolute; width:120; height:50; z-index:6; left: 450; top: 300">
+</div>
+<div id="Layer4" style="position:absolute; width:341px; height:184px; z-index:3; left: 100px; top: 371px"><img src="KPML3.jpg" width="537" height="352"></div>
+<div id="Layer41" style="position:absolute; width:300; height:200; z-index:2; left: 630; top: 371"> 
+  <ul class="normallf">
+  <li>このアンケートは本イベント期間中Kansai.pmのブース内に掲示します。</li>
+  <li>回答内容（Perl歴、Perl度、一言）は後日整理してKansai.pmのWebサイトで公開します。</li>
+  <li>写真、名前、所属は、ブース掲示以外で公開したり利用したりすることはありません</li>
+  </ul>
+</div>

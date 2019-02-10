@@ -1,0 +1,716 @@
+(資料 no.1) OpenGLをつかったプログラムのコンパイル
+==================================================
+
+C  : gcc -o glsamp glsamp.c -L/usr/X11R6/include -I/usr/X11R6/lib -lGL -lGLU
+
+FPC: ppc386 glsamp
+
+
+(資料 no.2) 簡単なパスカルコードと 同等の C、 Perlコード 
+=======================================================
+
+sample.pas
+----------
+program sample;
+{$ifdef WIN32}
+{$APPTYPE CONSOLE}
+{$endif}
+uses
+  SysUtils;
+
+const
+  Defs = 'hello pascal!';
+
+var
+  s: string;
+
+begin
+  { パラメータがあれば大文字 }
+  s:= 'HELLO PASCAL!';
+  if paramCount <> 0 then
+    writeln(s)
+  else
+    writeln(Defs);
+end.
+
+samplec.c
+---------
+
+#include <stdio.h>
+
+#define defs "HELLO C!\n"
+
+char* s;
+
+int main(int argc, char* argv[])
+{
+    s = "hello c!\n";
+    /* パラメータがあれば大文字 */
+    if (argc != 1) {
+      printf(defs);
+    } else {
+      printf(s);
+    }
+    return 0;
+}
+
+sample.pl
+---------
+#!/usr/bin/perl
+
+$Lowcase = "hello perl!\n";
+$Upcase = "HELLO PERL!\n";
+
+if ($ARGV[0] eq '') {
+  print $Lowcase;
+} else {
+  print $Upcase;
+}
+
+(資料 no.3) プログラムとユニット
+================================
+
+program foo;
+
+const
+  maxdata = 1000;
+  ...
+
+var
+  c: Char;
+  x: Integer;
+  ...
+
+procedure boo;
+begin
+  ...
+end;
+
+begin
+  ...
+end.
+
+
+unit bee;
+
+interface
+
+uses
+  Linux, SysUtils;
+
+const
+
+var
+
+implementation
+
+procedure..
+
+function..
+
+end.
+
+(資料 no.4) オブジェクトパスカル
+==================================
+
+objsample.pas
+-------------
+(*
+ *  object pascal sample program
+ *  *)
+{$MODE DELPHI}
+program objsample;
+
+uses
+  uObjsample;
+
+var
+   sample : TSample;
+
+begin
+   sample:= TSample.Create;
+   sample.Value:= 300;
+   sample.TestPrint;
+   sample.Free;
+end.
+
+uObjesample.pas
+---------------
+
+(*
+ *  uObjsample.pas
+ *  *)
+{$MODE DELPHI}
+unit uObjsample;
+
+interface
+
+type
+   TSample = class(TObject)
+   private
+     FValue: Integer;
+   public
+     procedure TestPrint;
+     constructor Create;
+     destructor Destroy;
+     property Value: Integer read FValue write FValue;
+  end;
+
+var
+   sample : TSample;
+
+implementation
+
+constructor TSample.Create;
+begin
+   inherited;
+   FValue:= 100;
+end;
+
+destructor TSample.Destroy;
+begin
+   inherited;
+end;
+
+procedure TSample.TestPrint;
+begin
+   Inc(FValue);
+   writeln('output from TSample : value is ',FValue);
+end; { TSample }
+
+end.
+
+
+(資料 no.5) C のライブラリをリンクした例
+===========================================
+
+cfunc.c
+-------
+/*
+ *  cfunc.c - test C function
+ */
+#include <stdio.h>
+
+void testcfunc()
+{
+  printf("this is a test c function\n");
+}
+
+callc.pp
+--------
+(*
+ * callc.pp - C の関数をインポートする。
+ *)
+program callc;
+
+{$linklib c}
+{$L cfunc.o}
+
+{ Declaration for the C function }
+Function strlen(P: pchar): longint; cdecl; external;
+procedure testcfunc; cdecl; external;
+
+begin
+  testcfunc;
+  WriteLn(strlen('Programming is easy!'));
+end.
+
+(資料 NO.6) Linux 上でのFPCとWindows上でのDelpi
+===============================================
+
+(*
+ * listfp.dpr
+ * listfp [option] pathname [outfile]
+ * c.f listfp -p C:\tmp\fpc-1.00\rtl\linux linuxfp.txt
+ *
+ *  option: -p *.ppファイルを検索(デフォルト)
+ *          -s *.pasファイルを検索
+ *          -d *.dprファイルを検索
+ *          -i *.incファイルを検索
+ *  このオプションは余計なファイルを検索しないため、
+ *
+ *  Delphiでコンパイルする場合には、プロジェクトオプション
+ *  ディレクトリ／条件の「条件定義」に「WIN32」を追加する。
+ *  listfp.cfg に-DWIN32が追加されます。
+ *
+ *  fpcでコンパイルするときは、コマンドラインで
+ *    $ ppc386 listfp.dpr -dLINUX
+ *
+ *  バグ:問題点は宣言が2行以上にまたがるときに対応していないところ。
+ *
+ *)
+program listfp;
+//{$define DEBUG}
+
+{$ifdef WIN32}
+{$APPTYPE CONSOLE}
+{$else LINUX}
+{$MODE DELPHI}
+{$endif}
+
+uses
+  SysUtils
+{$ifdef LINUX}
+  ,Linux
+  ,Dos
+{$endif}
+  ;
+
+const
+  tokenimp = 'implementation';
+  tokenfunc = 'function';
+  tokenproc = 'procedure';
+  space = $20;
+  tab   = $09;
+  lf    = $0D;
+  cr    = $0A;
+{$ifdef LINUX}
+  demi  = '/';
+{$else WIN32}
+  demi = '\';
+{$endif}
+
+var
+{$ifdef LINUX}
+  sr: SearchRec;
+  outF: Text;
+{$else WIN32}
+  sr: TSearchRec;
+  outF: TextFile;
+{$endif}
+  dirname,
+  path,
+  targetExt,
+  FullFileName,
+  outputFileName: String;
+  lcnt: array[0..2] of Integer; (* idx 0:func, 1:proc, 2:sum *)
+  i: Integer;
+
+procedure MakefpFile(FileName: string);
+var
+  inF: Text;
+  ch: Char;
+  tmpstr,line: String;
+  tokenf,tokenp,tokeni: String;
+  i: Integer;
+begin
+  AssignFile(inF,FileName);
+  Reset(inF);
+  WriteLn(FileName);
+  WriteLn(outF,FileName);
+  WriteLn(outF);
+  line:= '';
+  while not Eof(inF) do begin
+    Read(inF,Ch);
+    if Ord(Ch) <> cr then line:= line + Ch
+    else begin
+      tmpstr:= Trim(line);
+      tokenf:= Copy(tmpstr,1,Length(tokenfunc));
+      tokenp:= Copy(tmpstr,1,Length(tokenproc));
+      tokeni:= Copy(tmpstr,1,Length(tokenimp));
+      if LowerCase(tokenf) = tokenfunc then begin
+        WriteLn(outF,tmpstr);
+        lcnt[0]:= lcnt[0] + 1;
+        lcnt[2]:= lcnt[2] + 1;
+      end;
+      if LowerCase(tokenp) = tokenproc then begin
+        WriteLn(outF,tmpstr);
+        lcnt[1]:= lcnt[1] + 1;
+        lcnt[2]:= lcnt[2] + 1;
+      end;
+      if LowerCase(tokeni) = tokenimp then Break;
+      line:= '';
+    end;
+  end;
+  WriteLn(outF);
+  WriteLn(outF,'function: ',lcnt[0], ' procedure: ',lcnt[1]);
+  WriteLn(outF);
+  for i:=0 to 1 do lcnt[i]:= 0;
+  CloseFile(inF);
+end;
+
+(* パラメータなしで起動したとき出力する使い方 *)
+procedure usage;
+begin
+  WriteLn('.pp, .pas, .dprファイルから関数と手続きの宣言をリストします。');
+  WriteLn('implementation部までを走査しますので、implementation部のない');
+  WriteLn('ソースは実装部の名称をそのままリストします。');
+  WriteLn('構文:');
+  WriteLn('  getfrpu [option] path [output]');
+  WriteLn('オプション - option:');
+  WriteLn('  -p pathで.ppファイルを検索。(デフォルト)');
+  WriteLn('  -s pathで.pasファイルを検索。');
+  WriteLn('  -d pathで.dprファイルを検索。');
+  WriteLn('  -i pathで.incファイルを検索。');
+  WriteLn('パス - path:');
+  WriteLn('  検索対象ディレクトリを指定(必須)');
+  WriteLn('出力 - output:');
+  WriteLn('  出力ファイル名(デフォルトFuncProc.txt)');
+  WriteLn;
+  WriteLn('Good Luck!');
+  WriteLn;
+end;
+
+(* メインルーチン *)
+begin
+  TargetExt:= '*.pp';
+  OutputFileName:= 'FuncProc.txt';
+  for i:=0 to 2 do lcnt[i]:= 0;
+
+  case ParamCount of
+  0:begin
+      usage;
+      Exit;
+    end;
+  1:begin
+      if ParamStr(1)[1] = '-' then begin
+        if ParamStr(1)[2] ='h' then begin
+          usage;
+          Exit;
+        end;
+        WriteLn('parameter few');
+        Exit;
+      end;
+      dirname:= ParamStr(1);
+    end;
+  2:begin
+      if ParamStr(1)[1] = '-' then begin
+        case ParamStr(1)[2] of
+          'p': TargetExt:= '*.pp';
+          's': TargetExt:= '*.pas';
+          'd': TargetExt:= '*.dpr';
+          'i': TargetExt:= '*.inc';
+          'h': begin
+                usage;
+                Exit;
+               end;
+          else begin
+            WriteLn('unknown option');
+            Exit;
+          end;
+        end;
+        dirname:= ParamStr(2);
+      end else begin
+        dirname:= ParamStr(1);
+        OutputFileName:= ParamStr(2);
+      end;
+    end;
+  3:begin
+      if ParamStr(1)[1] = '-' then begin
+        case ParamStr(1)[2] of
+          'p': TargetExt:= '*.pp';
+          's': TargetExt:= '*.pas';
+          'd': TargetExt:= '*.dpr';
+          'i': TargetExt:= '*.inc';
+          'h': begin
+                usage;
+                Exit;
+               end;
+          else begin
+            WriteLn('unknown option');
+            Exit;
+          end;
+        end;
+        dirname:= ParamStr(2);
+        OutputFileName:= ParamStr(3);
+      end else begin
+        WriteLn('parameter miss match');
+        Exit;
+      end;
+    end;
+  else
+    begin
+      WriteLn('agrument miss much');
+      Exit;
+    end;
+  end;
+
+  path:= dirname + demi + TargetExt;
+{$ifdef DEBUG}
+  WriteLn('dirname: ', dirname);
+  WriteLn('path: ', path);
+  WriteLn('TargetExt: ', TargetExt);
+  WriteLn('OutputFileName: ', OutputFileName);
+  Exit;
+{$endif}
+  AssignFile(outF,OutputFileName);
+  ReWrite(outF);
+  WriteLn(outF,'listfp report - ' + DateTimeToStr(Now));
+  WriteLn(outF);
+  
+{$ifdef LINUX}
+  FindFirst(path,anyfile, sr);
+  while DosError = 0 do begin
+    fullfilename:= dirname + demi + sr.Name;
+    WriteLn(FullFileName);
+    MakefpFile(FullFileName);
+    FindNext(sr);
+  end;
+{$else WIN32}
+  if FindFirst(path, faAnyFile, sr) = 0 then begin
+    fullfilename:= dirname + demi + sr.Name;
+    MakefpFile(FullFileName);
+    while FindNext(sr) = 0 do begin
+      fullfilename:= dirname + demi + sr.Name;
+      MakefpFile(FullFileName);
+    end;
+  end;
+{$endif}
+  WriteLn(outF,'total count: ',lcnt[2]);
+  WriteLn('total count: ',lcnt[2]);
+  WriteLn;
+  FindClose(sr);
+  CloseFile(outF);
+end.
+
+(資料 no.7) CGI プログラム
+==========================
+
+menu.html
+---------
+
+<html>
+<head>
+<title>visitor data</title>
+<style type="text/css">
+<!-- 
+        EM.red {color:red; font-style:normal}
+        EM.def {font-style:italic; font-weight: bold}
+        H1 {text-align: center}
+        UL {list-style-type: none}
+        TT {font-weight: bold}
+        PRE {color:blue }
+-->
+</style>
+</head>
+<body bgcolor=white>
+<h1>メンバー登録</h1>
+<ul><ul>
+<form action="cgi-bin/getdatabank">
+<input type=submit value=" 一覧 ">
+</form>
+</ul></ul>
+<hr>
+
+<UL><UL>
+●　以下のフォームに入力してください。●
+<P>
+
+<form method="POST" action="cgi-bin/cgi_post">
+
+1：名前　　<input name="name"><P>
+2：年齢　　<input type="password" name="age" size=5>　歳<P>
+3：性別　　<input type="radio"    name="sex" value="male" checked>Male 
+     　　<input TYPE="radio"name="sex" VALUE="female">Female<P>
+
+4：あなたの E-Mail アドレス　　<input name="Email" value="xxxxxx@xxxxx.or.jp" size=40><P>
+
+5：所属　　<input name="field" size=20><P>
+6：興味のある分野　
+<select name="interesting">
+<OPTION>音楽
+<OPTION SELECTED>文学
+<OPTION>美術
+<OPTION>科学
+<OPTION>スポーツ
+</select>
+<P>
+
+7：コメント<P>
+<textarea wrap=virtual name="Comment" rows=7 cols=65></textarea><P>
+<input type=submit value="  O K  ">　<input type=reset value="キャンセル">
+</form>
+
+ご協力ありがとうございました。<P>
+</UL></UL>
+<HR>
+
+
+cgi_post.pas 
+------------
+
+program cgi_post;
+
+uses linux;
+
+const max_data = 1000;
+
+type datarec = record
+  name,value : string;
+  end;
+
+var
+   data          : array[1..max_data] of datarec;
+   i,nrdata      : longint;
+   tmp           : integer;
+   c             : char;
+   literal,aname : boolean;
+   f             : Text;
+   entry         : Text;
+   cnt           : longint;
+   
+{ euc code URLコード変換のための16進数取得 }
+function HexStrToInt(c : Char):Integer;
+begin
+   case c of
+     '0'..'9': HexStrToInt:= Ord(c) - 48;
+     'A'..'F': HexStrToInt:= Ord(c) - 55;
+     'a'..'f': HexStrToInt:= Ord(c) - 87;
+   else HexStrToInt:= 0;
+   end; { case }
+end;
+
+
+begin
+   writeln ('Content-type: text/html');
+   writeln;
+   if getenv('REQUEST_METHOD')<>'POST' then
+   begin
+      writeln ('This script should be referenced with a METHOD of POST');
+      halt(1);
+   end;
+   if getenv('CONTENT_TYPE')<>'application/x-www-form-urlencoded' then
+   begin
+      writeln ('This script can only be used to decode form results');
+      halt(1)
+   end;
+   nrdata:=1;
+   aname:=true;
+   { URLデータの取得と分析 }
+   while not eof(input) do
+   begin
+      literal:=false;
+      read(c);
+      if c = '\' then
+      begin
+         literal:=true;
+         read(c);
+      end;
+      if literal or (( c <> '=') and ( c <> '&')) then
+         with data[nrdata] do
+         begin
+            if c = '%' then
+            begin
+               read(c);
+               tmp:= HexStrToInt(c);
+               Tmp:= tmp shl 4;
+               read(c);
+               tmp:= tmp + HexStrToInt(c);
+               if aname then name:= name + Char(tmp) else value:= value + Char(tmp);
+            end else
+               if aname then name:= name + c else value:= value + c;
+         end else
+         begin
+            if c ='&' then
+            begin
+               inc (nrdata);
+               aname:=true;
+            end else
+               aname:=false;
+         end;
+   end;
+   { エントリー番号の取得と更新 }
+   assign(entry,'Count');
+   reset(entry);
+   readln(entry,cnt);
+   inc(cnt);
+   rewrite(entry);
+   writeln(entry,cnt);
+   close(entry);
+   { 入力データの登録 }
+   assign(f,'databank');
+   append(f);
+   write(f,'entry ',cnt,' ');
+   for i:=1 to nrdata do write(f,data[i].name,' ',data[i].value,' ');
+   writeln(f);
+   close(f);
+   { 入力データの再表示 }
+   writeln('<html><body bgcolor=white>');
+   writeln('<h2>入力は以下の通りです。</h2>');
+   writeln('<hr>');
+   writeln('<ul>');
+   for i:=1 to nrdata do writeln('<li> ',data[i].name,' = ',data[i].value);
+   writeln('</ul>');
+   writeln('<hr>');
+   writeln('<p>登録しました。');
+   writeln('<p>ブラウザの「戻る」でまえの画面に戻ってください。');
+   writeln('</body></html>');
+end.
+
+cgi_post.cgi 
+------------
+
+#!/usr/bin/perl
+
+$data_file = "Count";
+open(INNUM, "<$data_file") || die "Counter Read Error.......\n";
+$counter = <INNUM>;
+$counter_new = ($counter + 1);
+open(OUTNUM, ">$data_file") || die "Counter Write Error.......\n";
+print OUTNUM "$counter_new\n";
+close(INNUM);
+close(OUTNUM);
+$EntryNo = $counter_new;
+
+$kind= $ENV{'CONTENT_TYPE'};
+$datacapa = $ENV{'CONTENT_LENGTH'};
+read(STDIN, $visitor,  $datacapa);
+
+@group = split(/&/, $visitor);
+foreach $ans (@group)
+        {($name, $value) = split(/=/, $ans);
+        $value =~ tr/+/ /;
+        $value =~ s/%(..)/pack("c", hex($1))/ge;
+        $ok_visitor{$name} = $value;}
+
+$vname = $ok_visitor{'name'};
+$vage  = $ok_visitor{'age'};
+$vsex  = $ok_visitor{'sex'};
+$vEmail = $ok_visitor{'Email'};
+$vfield = $ok_visitor{'field'};
+$vinteresting = $ok_visitor{'interesting'};
+$vComment =$ok_visitor{'Comment'};
+
+print "Content-type: text/html\n\n";
+print "<html><body bgcolor=white>";
+print "$visitor\n";
+print "<h2>入力は以下の通りです。(CGI PERL)</h2>";
+print "<hr>";
+print "<ul>";
+print "<li>entry $EntryNo"; 
+print "<li>name= $vname";
+print "<li>age= $vage";
+print "<li>sex= $vsex";
+print "<li>Email= $vEmail";
+print "<li>field= $vfield";
+print "<li>interesting= $vinteresting";
+print "<li>Comment= $vComment";
+print "</ul>";
+print "<hr>";
+print "<p>登録しました。";
+print "<p>ブラウザの「戻る」でまえの画面に戻ってください。";
+print "</body></html>";
+
+@kojindata = (
+        "entry $EntryNo", 
+        "name $vname", 
+        "age $vage", 
+        "sex $vsex",
+        "Email $vEmail",
+        "field $vfield",
+        "interesting $vinteresting",
+        "Comment $vComment");
+$output_file = "databank";
+open(OUT, ">>$output_file") || die "Write Error.......\n";
+print OUT "@kojindata\n";
+close(OUT);
+
+参考文献とURL
+=============
+
+http://www.freepascal.org/fpc/
+http://home.interlink/~ipfr_cat/
+Niklaus Wirth著「アルゴリズム＋データ構造＝プログラム」
+Charles Calvert著「Delphi2.0j - 32bitパワープログラミング」(インプレス) 
+
+

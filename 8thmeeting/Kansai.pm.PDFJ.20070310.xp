@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="x-sjis-cp932"?>
+<XPDFJ version="0.1">
+<do file="kof2002.inc" version="1.6" boldfont="HiraKakuProW6.otf"/>
+
+<require module="PDFJ::Form"/>
+<eval>
+  $FieldBGColor = "#ffffe0";
+  $ROFieldBGColor = "0.95";
+  $ButtonBGColor = "#e0ffff";
+</eval>
+<alias tag="TEXTBOX" aliasof="new_field" type="Text" height="20" font="$FontH{mincho}" fontsize="18" fillcolor="$FieldBGColor"/>
+<alias tag="CHECKBOX" aliasof="new_field" type="CheckBox" width="20" height="20" size="18" fillcolor="$FieldBGColor"/>
+<alias tag="RADIOS" aliasof="new_field" type="RadioButton" width="20" height="20" size="18" fillcolor="$FieldBGColor"/>
+<alias tag="SUBMIT" aliasof="new_field" type="Button" buttontype="Submit" name="Submit" caption="送信" width="60" height="22" font="$FontH{mincho}" fontsize="18" fillcolor="$ButtonBGColor" noprint="1"/>
+
+<alias tag="RED" aliasof="S" color="#ff0000"/>
+
+<def tag="Header">
+  <return>
+  <NewBlock/>
+  <P tstyle="$TStyle{pagetitle}" pstyle="$PStyle{pagetitle}">
+    <Outline title="$Args{title}"/>
+    <T>$Args{title}</T>
+  </P>
+  <HR width="720" size="2" color="#770000"/>
+  <SKIP skip="10"/>
+  </return>
+</def>
+
+<TStyle setvar="$TStyle{nombre}" font="$Font{normal}" fontsize="15"/>
+<clone setvar="$PStyle{nombre}" caller="$PStyle{default}" align="e"/>
+<def tag="Nombre">
+  <eval>$Args{_pagenum} = $Args{page}->pagenum;</eval>
+  <Paragraph style="$PStyle{nombre}">
+    <text><Text style="$TStyle{nombre}" texts="$Args{_pagenum}"/></text>
+    <call>
+      <show page="$Args{page}" x="75" y="45" align="ml"/>
+    </call>
+  </Paragraph>
+</def>
+
+<alias tag="Note" aliasof="P" pstyle="$PStyle{note}" tstyle="$TStyle{note}"/>
+
+<alias tag="Code" aliasof="P" pstyle="$PStyle{code}" foreachline="1"/>
+
+<def tag="CodeBlock">
+  <return>
+    <TABLE cellwidth="100%" cellpadding="5" cellbox="sf" cellboxstyle="fillcolor:#ffffff" preskip="5" postskip="5"><TR><TD><Code>$Args{contents}</Code></TD></TR></TABLE>
+  </return>
+</def>
+
+<new_image setvar="$Image{bgimg}" src="img_3785.jpg" pxwidth="1024" pxheight="768" width="842" height="595"/>
+
+<Block direction="V">
+  <style><BStyle/></style>
+  <objects>
+
+<SKIP skip="100"/>
+<P tstyle="$TStyle{whitebigtitle}" pstyle="$PStyle{bigtitle}">
+PDFJ0.90のミニページ機能
+</P>
+<P tstyle="$TStyle{whitesmalltitle}" pstyle="$PStyle{smalltitle}">
+中島 靖（Kansai.pm、(株)ネットストック）
+&lt;nakajima@netstock.co.jp&gt;
+</P>
+<P tstyle="$TStyle{whitesmalltitle}" pstyle="$PStyle{smalltitle}">
+2007年3月10日
+Kansai.pm 第8回ミーティング
+</P>
+
+<Header title="PDFJとは"/>
+<UL><MLI>
+日本語PDFを生成するPerlモジュール
+日本語の組版ルール（JIS X 4051）を組み込んである
+XML形式の原稿からPDFを生成するXPDFJというモジュールが付属
+XPDFJの原稿での命令はマクロで拡張可能。HTMLライクな標準マクロ付属
+</MLI></UL>
+<P>
+※このPDFもXPDFJで作成
+※http://hp1.jonex.ne.jp/~nakajima.yasushi/にあります
+</P>
+
+<Header title="ミニページとは"/>
+<P>
+バージョン0.90からの新機能の一つ
+</P>
+<UL>
+<LI>ページと同じように表示可能なオブジェクト（テキスト、段落、画像、図形、ブロック）を配置できる</LI>
+<LI>それ自体表示可能なオブジェクトとしてページに配置できる</LI>
+<LI>領域外にはみ出した部分は表示されない</LI>
+  <UL label="-">
+  <LI>クリッピングに利用できる</LI>
+  </UL>
+<LI>繰り返し配置しても参照情報だけなので生成時間もPDFサイズも膨らまない</LI>
+  <UL label="-">
+  <LI>タイリングや全ページへの配置などに利用できる</LI>
+  <LI>ただし、画像はもともと同じオブジェクトを繰り返し配置しても参照情報だけ</LI>
+  </UL>
+</UL>
+
+<Header title="ミニページの例"/>
+<CodeBlock>
+<![CDATA[
+use PDFJ;
+my $doc = PDFJ::Doc->new(1.4, 595, 842);
+my $page = $doc->new_page;
+my $minipage = $doc->new_minipage(9, 9);
+my $shape = Shape->circle(4, 2, 3, 's')->box(4, 3, 7, 4, 's');
+$shape->show($minipage, 0, 0);
+for( my $y = 0; $y < 842; $y += 10 ) {
+　for( my $x = 0; $x < 595; $x += 10 ) {
+　　$minipage->show($page, $x, $y);
+　}
+}
+$doc->print('mpsample.pdf');
+]]>
+</CodeBlock>
+
+<Header title="ミニページを使わないと…"/>
+<CodeBlock>
+<![CDATA[
+use PDFJ;
+my $doc = PDFJ::Doc->new(1.4, 595, 842);
+my $page = $doc->new_page;
+my $shape = Shape->circle(4, 2, 3, 's')->box(4, 3, 7, 4, 's');
+for( my $y = 0; $y < 842; $y += 10 ) {
+　for( my $x = 0; $x < 595; $x += 10 ) {
+　　$shape->show($page, $x, $y);
+　}
+}
+$doc->print('nmpsample.pdf');
+]]>
+</CodeBlock>
+
+<eval>$rv = [1]</eval>
+
+<Header title="0.90のその他の新機能"/>
+<UL>
+<LI>対話フォーム機能</LI>
+<UL label="-">
+<LI><TEXTBOX name="f1" width="50"/>テキストボックス、<CHECKBOX name="f2"/>チェックボックス、<RADIOS name="f3" values="$rv"/>ラジオボタン、<SUBMIT url="dummy" format="post"/>送信ボタンなどを配置して、入力データをサーバーへ送信</LI>
+<LI>この機能を利用したフィードバック用PDFをサンプルとして添付</LI>
+</UL>
+<LI>XPDFJの標準マクロの&lt;TABLE&gt;でvalignが指定できるようになった<BR/>
+<TABLE cellwidth="150" cellbox="s" cellpadding="5">
+  <TR>
+    <TD>
+      <P>
+        valign
+        のデモ
+      </P>
+    </TD>
+    <TD valign="top">
+      top
+    </TD>
+    <TD valign="middle">
+      middle
+    </TD>
+    <TD valign="bottom">
+      bottom
+    </TD>
+  </TR>
+</TABLE>
+</LI>
+</UL>
+
+  </objects>
+  <call>
+    <break sizes="$Doc{Bodyheight}">
+      <call>
+        <new_page caller="$Doc" setvar="$page" trans="1,Wipe,90"/>
+        <eval>$pagenum = $page->pagenum; print "page$pagenum\n"</eval>
+        <Shape>
+          <call>
+            <do if="$Args{forprint} ? $page->pagenum == 1 : $page->pagenum >= 1">
+              <show page="$page" caller="$Image{bgimg}" x="0" y="0" align="bl"/>
+            </do>
+            <do if="$page->pagenum > 1">
+              <box x="0" y="0" w="782" h="535" spec="fr10" style="linewidth:2; strokecolor:#000077; fillcolor:#f0f8ff"/>
+            </do>
+            <show page="$page" x="30" y="30" align="bl"/>
+          </call>
+        </Shape>
+        <show page="$page" x="$Doc{Bodyleft}" y="$Doc{Bodytop}" align="tl"/>
+        <Nombre page="$page"/>
+      </call>
+    </break>
+  </call>
+</Block>
+
+<do if="$Args{forprint}">
+  <eval>
+    $Args{outfile} =~ s/\.pdf$/.p.pdf/i;
+  </eval>
+</do>
+<print file="$Args{outfile}"/>
+
+</XPDFJ>

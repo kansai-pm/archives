@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="x-sjis-cp932"?>
+<XPDFJ version="0.2">
+<do file="stddefs.inc"/>
+<BODY>
+<H1>XPDFJのサンプル</H1>
+<P align="right">
+2004/10/23
+Kansai.pm
+中島 靖
+</P>
+<H2>大きな見出し</H2>
+<H3>中くらいの見出し</H3>
+<H4>小見出し</H4>
+<P>
+本文です。デフォルトでは10ポイントの明朝です。
+</P>
+<OL><MLI>
+箇条書きです
+各行をLIで囲まなくてもよいMLIなんてものがあります
+</MLI></OL>
+<SKIP skip="10"/>
+<HR/>
+<TABLE cellwidth="100,200" cellbox="s" cellpadding="5" preskip="10" indent="50">
+<TR><TH>ソフトウェア名</TH><TH>どうよ</TH></TR>
+<TR><TD>PDFLib</TD><TD>日本語の組版をまじめにやろうと思うとちょっと大変</TD></TR>
+<TR><TD>FOP</TD><TD>うーんJavaかぁ(^^;;;)</TD></TR>
+<TR><TD>OpenOffice</TD><TD>やっぱりGUIで作れるのはいいですね</TD></TR>
+<TR><TD>PDFJ</TD><TD>さて、みなさんの評価はどうでしょうか</TD></TR>
+</TABLE>
+</BODY>
+<print file="$Args{outfile}"/>
+</XPDFJ>

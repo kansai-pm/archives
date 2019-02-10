@@ -1,0 +1,1364 @@
+<HTML>
+<HEAD>
+<TITLE>Perlオブジェクト指向</TITLE>
+<!-- LINK REL="STYLESHEET" HREF="perl_study.css" -->
+<link REL="STYLESHEET" HREF="../basestyle.css">
+<link REL="STYLESHEET" HREF="perl_study.css">
+</HEAD>
+<BODY>
+<a name="top"> </a>
+<h1>Perlオブジェクト指向</h1>
+<h2>目次</h2>
+<UL>
+<li> -&gt; <a href="#notice">趣旨と注意書き</a>
+<li> -&gt; <a href="#package">身近なpackage</a>
+<li> -&gt; <a href="#package2">なんのためのpackage ?</a>
+<li> -&gt; <a href="#new">What's `new' ?</a>
+<li> -&gt; <a href="#bless">bless ( reference => package )</a>
+<li> -&gt; <a href="#hello">Hello, Module World!</a>
+<li> -&gt; <a href="#object">オブジェクト？</a>
+<li> -&gt; <a href="#main">main パッケージと関連付けてみる</a>
+<li> -&gt; <a href="#class">クラスとメソッド</a>
+<li> -&gt; <a href="#objective">オブジェクト指向</a>
+<li> -&gt; <a href="#obref">オブジェクトがリファレンスなら…</a>
+<li> -&gt; <a href="#calc1">-&gt; を連続する</a>
+<li> -&gt; <a href="#calc2">多重継承</a>
+<li> -&gt; <a href="#calc3">多重継承をやめる</a>
+<li> -&gt; <a href="#calc4">多重継承をやめる(もう少し簡単に)</a>
+<li> -&gt; <a href="#link">情報源</a>
+</UL>
+<a name="notice"> </a>
+<h2>趣旨と注意書き</h2>
+<p>
+これを読んでも、あんまりきちっとした知識は、身に付きません（^^;<br>
+オブジェクト指向の概念はほんの少ししか説明しません。ここで述べるのは、Perlでどうやるかってのが主です（それも不十分＆嘘まじりかも）。<br>
+とりあえず、モジュールを作りたい…って人に、どうぞ。<br><br>
+・リファレンスを知っている。<br>
+・リファレンスを使える。<br><br>
+これは必須能力です。<br><br>
+<a href="mailto:atusi@pure.ne.jp">突っ込み</a>歓迎。
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+
+<a name="package"> </a>
+<h2>身近な package</h2>
+<p>
+package ってのは、何でしょうか？
+</p>
+<pre class="code">
+package hoge;
+</pre>
+<p>
+というのは、hoge というパッケージですよ、という宣言です。<br>
+これを書かないと、
+</p>
+<pre class="code">
+package main;
+</pre>
+<p>
+と、暗黙に了解されます。<br>
+ですから、以下のscriptを、perl -w で動かすと…
+</p>
+<pre class="code">
+#!/usr/bin/perl -w
+
+$hoge = "hello world";
+</pre>
+<p>
+次の警告が出ます。
+</p>
+<pre class="code">
+Name "main::hoge" used only once: possible typo at ...
+</pre>
+<p>
+「main::hoge という名前は、一回しか使われていません。タイプミスの可能性...」ということですが、<br>
+"main::hoge" という名前は使っていません。"hoge" だけです。<br>
+この、"main"は、パッケージ名なわけです。"::"は区切りです。<br>
+そして、このscriptには、<strong>package宣言がないので、"main"がパッケージ名</strong>になります。<br>
+<p>
+※以降、ここでは、常に package を宣言します。
+</p>
+<p>
+試しに、以下のを動かしてみましょう。
+</p>
+<pre class="code">
+#!/usr/bin/perl -w
+
+package hogehoge;
+
+$hoge = "hello world";
+</pre>
+<p>
+次の警告が出ます。
+</p>
+
+<pre class="code">
+Name "hogehoge::hoge" used only once: possible typo at ...
+</pre>
+<p>
+となります。<strong>package hogehoge;</strong> と、パッケージ名が宣言されたためですね。<br>
+これは、変数に限ったことではありません。例えば、サブルーチンだって、
+</p>
+<p class="note">
+パッケージ名::サブルーチン名
+</p>
+<p>
+と指定してもいいのです。
+</p>
+<p>
+実際、jcode.pl などで、
+</p>
+<pre class="code">
+jcode'convert(...);
+</pre>
+<p>
+のようにしているのを見たことはないでしょうか? "::"ではありませんけど、これもパッケージを明示しているのです。
+ただ、' で書くのは、古い書き方なので、やめておきましょう。
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+<a name="package2"> </a>
+<h2>なんのためのpackage ?</h2>
+<p>
+じゃぁ、なんでpackageを宣言するんでしょうか。<br>
+「名前空間」という物が関係してきますが、深く考えずに、packageを箱の名前とでも考えます。<br>
+ちなみに、packageは、ブロックの中でも使えますので、次のように書いてみましょう。
+</p>
+<pre class="code">
+{
+  package hoge;
+}
+</pre>
+<p>
+これで、ブロックの中は、hoge という箱です。では、もう一つ。
+</p>
+<pre class="code">
+{
+  package hoge;
+}
+{
+  package hoo;
+}
+</pre>
+<p>
+もう一つ、hooという箱を作りました。<br>
+この中に物を入れましょう。
+</p>
+<pre class="code">
+{
+  package hoge;
+
+  $bar = '$bar is in hoge package',"\n";
+  print $bar;
+}
+{
+  package hoo;
+
+  $bar = '$bar is in hoo package',"\n";
+  print $bar;
+}
+</pre>
+<p>
+hoge箱の中の $bar は、hoo箱の中の $bar とは、同じ名前でも、無関係です。<br>
+ところで、ブロックの外側も、あるパッケージのはずです。<br><br>
+何も宣言していないのですから、当然…<br><br>
+<strong>main パッケージ</strong>です。<br><br>
+main という箱にも、似たような物を入れてみましょう。
+</p>
+<pre class="code">
+#!/usr/bin/perl
+
+package main;
+
+$bar = '$bar is in main package';
+
+{
+  package hoge;
+
+  $bar = '$bar is in hoge package';
+  print $bar,"\n";
+}
+{
+  package hoo;
+
+  $bar = '$bar is in hoo package';
+  print $bar,"\n";
+}
+
+print $bar;
+</pre>
+<p>
+さて、実行するとどうなるでしょうか？
+</p>
+<pre class="code">
+$bar is in hoge package
+$bar is in hoo package
+$bar is in main package
+</pre>
+<p>
+最後の print は、<strong>mainの箱の中の$bar ですから変化しません</strong>。<br><br>
+package 宣言すると、箱の中の物は、他の箱から区別されます。<br>
+ですから、他と同じ名前の変数を使っても、そのパッケージ内でその変数の値をいじらなければ、他のパッケージで、変わったところで、無関係です。<br><br>
+要するに、ちゃんと書くと、こういうことです。
+</p>
+<pre class="code">
+#!/usr/bin/perl
+
+package main;
+
+$main::bar = '$bar is in main package';
+
+{
+  package hoge;
+
+  $hoge::bar = '$bar is in hoge package';
+  print $hoge::bar,"\n";
+}
+{
+  package hoo;
+
+  $hoo::bar = '$bar is in hoo package';
+  print $hoo::bar,"\n";
+}
+
+print $main::bar;
+</pre>
+<p>
+これは、<strong>変数でなくとも、サブルーチンでも同じ</strong>です。それぞれのパッケージのサブルーチンは、それぞれのパッケージのものです。
+</p>
+<pre class="code">
++-------------------+
+| main              |
+|  $bar +--------+  |
+|       | hoge   |  |
+|       |   $bar |  |
+|       +--------+  |
+|       +--------+  |
+|       | hoo    |  |
+|       |   $bar |  |
+|       +--------+  |
++-------------------+
+</pre></pre>
+<p>
+てな感じで、それぞれの箱が、それぞれの変数やサブルーチンを持ってるわけです。<br>
+そして、それぞれの名前のついた箱の中(名前空間)は、それぞれのものなので、互いに干渉しません。<br>
+これをもって、<strong>それぞれのパッケージは、それぞれの「名前空間」を持つ</strong>というわけです。
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+
+<a name="new"> </a>
+<h2>What's `new' ?</h2>
+<p>
+モジュールと呼ばれる物のソースを見ると、
+以下のような物が、多分あります。
+</p>
+<pre class="code">
+package Stone;
+
+sub new{
+  my $pkg = shift;
+  my $hash= {
+    name   => shift,
+    weight => shift
+  }
+  bless $hash,$pkg;
+}
+</pre>
+<p>
+これを、コンストラクタといい、役割は、オブジェクトを生成します。<br>
+で、オブジェクトを生成するものを、「コンストラクタ」といいまして、別に new じゃなくてもかまいません。<br>
+ただ、他の言語では、new であることが多いそうです。
+</p>
+<p>
+で、よく分からないと思うので、それはオイトイテ、その中身をちょっとのぞいてみましょう。<br><br>
+</p>
+<pre class="code">
+my $pkg = shift;
+my $hash= {
+  name   => shift,
+  weight => shift
+}
+bless $hash,$pkg;
+</pre>
+<p>
+最初、shift ですから、new の引数が与えられるはずです、
+では、new の呼び出しを見てみましょう。
+</p>
+<pre class="code">
+package main;
+
+use Stone;
+my $obj = Stone-&gt;new('石灰岩','100');
+</pre>
+<p>
+パッケージ名矢印演算子(-&gt;)サブルーチン名で、パッケージ中のサブルーチンを探して、それに引数を与えます。<br>
+<br>
+ただ、使う際には意識しないでいいのですが、第一引数には、そのパッケージ名が与えられます。<br><br>
+つまり、このサブルーチンの呼び出しをわかりやすく書くと、
+</p>
+<pre class="code">
+$obj = Stone::new('Stone','石灰岩','100');
+</pre>
+<p>
+となります。で、もう一度、受け取り側を見てみます。
+</p>
+<pre class="code">
+my $pkg = shift;
+my $hash= {
+  name   => shift,
+  weight => shift
+}
+bless $hash,$pkg;
+</pre>
+<p>
+第一引数にパッケージ名ですので、$pkgには、'Stone'がわたります。
+ハッシュリファレンス$hash の中の name に第二引数の「石灰岩」 weight に第三引数の「100」が与えられます。
+</p>
+<p>
+で、bless って？<br>
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+
+<a name="bless"> </a>
+<h2>bless reference => package</h2>
+<pre class="code">
+package Stone;
+
+my $pkg = shift;
+my $hash= {
+  name   => shift,
+  weight => shift
+}
+bless $hash,$pkg;
+</pre>
+<p>
+引数については、先ほど説明したとおり、
+new に、"Stone"が、引数として渡されるのですから、
+$pkg に "Stone" が入り、ハッシュリファレンス $hash の中に、第二引数、第三引数がそれぞれ入ります。<br><br>
+</p>
+<p>
+最後の bless は要するに、
+</p>
+<pre class="code">
+bless ハッシュリファレンス,パッケージ名
+</pre>
+<p>
+というわけです。
+</p>
+<p>
+で、Perlでは、サブルーチンの最後の実行結果の値を返すのでした。で、new は、コンストラクタといって、オブジェクトを返すものでした。
+<br><br>
+ですから…
+<br><br>
+「bless は、何返すの？」ってことですが、オブジェクトを返します。<br>
+「だから、オブジェクトって何？」ってことですが、<br>
+もう少しオイトイテ。
+</p>
+<p>
+この、bless が返す値、オブジェクトの正体を調べてみます。
+</p>
+<pre class="code">
+#!/usr/bin/perl
+package main;
+
+use Stone;
+$obj = Stone-&gt;new;
+print ref $obj;
+print "\n";
+print $obj;
+</pre>
+<p>
+実行結果は、
+</p>
+<pre class="code">
+Stone
+Stone=HASH(0x10b1350)
+</pre>
+<p>
+リファレンスの種類を返す、ref にかけてみると、"Stone" となります。<br>
+$obj というのは、"Stone"に関連付けられていることがわかります（オブジェクトは自分がどのパッケージに属しているのか知っている）。
+</p>
+<p>
+で、$obj そのものを表示すると、
+</p>
+<pre class="code">
+Stone=HASH(0x10b1350)
+</pre>
+<p>
+<strong>$objは、"Stone"と関連付けられた、ハッシュリファレンス</strong>だということです。
+ハッシュリファレンスですから、
+</p>
+<pre class="code">
+print $obj-&gt;{'stone'};
+</pre>
+<p>
+とすると、「石」と表示されます。
+</p>
+<p>
+それだけか、といわれると、もちろん、それだけではなく、$objは、Stoneと関連付けられているので、Stoneと関わりのある、色々なことができます（というか、Stoneと関わりのあることしかできません）。<br>
+</p>
+<p>
+どうやるかというと、new のところで、-&gt;を使って、コンストラクタを呼んでいました。
+</p>
+<pre class="code">
+パッケージ名-&gt;サブルーチン名(引数)    # Stone-&gt;new(@array)
+</pre>
+<p>
+というものでしたが、パッケージ名だけでなく、オブジェクトでもいいのです(refで見たとおり、オブジェクトは、自分が属しているパッケージ名を知っているから)。)
+</p>
+<pre class="code">
+$obj-&gt;something(引数);
+</pre>
+<p>
+とすると、$objが関連付けられているパッケージ（今の場合、Stone パッケージ）内にある、
+somethingサブルーチンを実行します。
+</p>
+<P>
+んーと、わかんない人は（たぶん、説明悪いから、わからないと思う）、自分で、上のコードを試してください。なんとなくわかるかも。多分、きっと（ぉ
+</P>
+<p>
+…では、ここいらで、簡単なモジュールを作ってみましょう。
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+<a name="hello"> </a>
+<h2>Hello, Module World!</h2>
+<p>
+"Hello, Module World!"だけじゃ、つまんないので、日本語と英語を返すことにしましょう。<br>
+</p>
+
+<pre class="code">
+package HelloModuleWorld;
+
+sub new {
+  my $pkg = shift;
+  bless {},$pkg;
+}
+
+sub Japanese{
+  return 'こんにちは、モジュールの世界へ！';
+}
+
+sub English{
+  return 'Hello, Module World!';
+}
+
+1;
+</pre>
+<p>
+<strong>最後に、1 が付いたのは、1返さないと、Perlが、エラーを起こすから</strong>です。<br>
+
+モジュールは、これだけです。
+main の方は、
+</p>
+
+<pre class="code">
+#!/usr/bin/perl
+
+package main;
+
+use HelloModuleWorld;
+my $obj = HelloModuleWorld-&gt;new;
+
+print $obj-&gt;Japanese;
+print "\n";
+print $obj-&gt;English;
+
+</pre>
+<p>
+これだけです。
+
+実行結果は、
+</p>
+
+<pre class="code">
+こんにちは、モジュールの世界へ！
+Hello, Module World!
+</pre>
+
+<p>
+これで、あなたも、ちゃーんと、モジュールが作れます（というのは嘘かもですが）。
+</p>
+<p>
+「…で、オブジェクトって？」
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+
+<a name="object"> </a>
+<h2>オブジェクト？</h2>
+<p>
+さっきから何度か書いてるんですが、(確認しておきますが、Perlでは)<br>
+オブジェクトとは、「<strong>パッケージ名と関連づけられたリファレンス</strong>」のことを言います。
+</p>
+<p class="note">
+bless reference => package;
+</p>
+<p>
+bless は、リファレンスをパッケージに関連付けているわけです。で、「<strong>オブジェクトは自分がどのパッケージに属しているのかを知っている</strong>」。
+知っているから、パッケージと関係ある仕事ができる。
+</p>
+<p>
+…サキヘススモウ…。
+</p>
+<p>
+概念は一応、<a href="#objective">こちら</a>。
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+
+
+<a name="main"> </a>
+<h2>main パッケージと関連付けてみる</h2>
+<p>
+ふつう、やるかどうかは別にして、リファレンスをmainパッケージと関連付ける(blessする)ことも可能です。
+</p>
+<p>
+現在時刻のセットと取得を行うものを作ってみましょう。
+</p>
+<p>
+日付をセットするのと、日付を取得する機能が必要です。<br>
+とりあえず、年月日バラバラで取得するようにしましょう
+</p>
+<pre class=code>
+set_dare ... 日付をセットします。
+get_year   ... 年を取ってきます。
+get_month  ... 月を取ってきます。
+get_day    ... 日を取ってきます。
+</pre>
+<p>
+サブルーチンはこんな感じで良いでしょう。<br>
+ただ、日付のセットって、どこにする？
+</p>
+<p>
+グローバル変数？
+</p>
+<p>
+という手もありますが、不便なので、別の手です。<br>
+bless が役に立ちます。
+</p>
+<pre class=code>
+bless{
+  year => undef,
+  day  => undef,
+  month=> undef
+},$pkg
+</pre>
+<p>
+これで、受け皿（ハッシュリファレンス）が出来ました。ここにセットすればいいわけです。<br>
+</p>
+<p>
+折角ここまで書いたんですから、コンストラクタを書いてみましょう。<br>
+</p>
+<pre class=code>
+sub new {
+  my $pkg = shift;
+  bless{
+    year => undef,
+    day  => undef,
+    month=> undef,
+  },$pkg
+}
+</pre>
+<p>
+とりあえず、ここまで作ってみますか。
+</p>
+<pre class=code>
+#!/usr/bin/perl
+
+package main;
+
+my $date = main-&gt;new;
+
+sub new {
+  my $pkg = shift;
+  bless{
+    year => undef,
+    day  => undef,
+    month=> undef,
+  },$pkg
+}
+</pre>
+<p>
+$date は、オブジェクト（パッケージ"main"と関連付けられたリファレンス）です。
+</p>
+<p>
+では、日付をセットするサブルーチン(set_date)を作りましょう。<br><br>
+折角ですから、時差を引数にとって、GMTから計算しましょう。
+</p>
+<pre class=code>
+sub set_date{
+  my $self = shift;
+  my $time_deference = shift;
+  ($self-&gt;{year},$self-&gt;{month},$self-&gt;{day}) = ( gmtime time + $time_deference * 3600 )[5,4,3]
+  $self-&gt;{year} +=1900;
+  $self-&gt;{month}++;
+}
+</pre>
+<p>
+さて…<strong>$self</strong>ってなんでしょうか？<br>
+</p>
+<p>
+パッケージ名と関連づけられたリファレンスがオブジェクトでしたが、
+そのオブジェクトを使って、パッケージ内のサブルーチンを使う呼び出し方は、どうでしたっけ？<br><br>
+</p>
+<pre class=code>
+$date-&gt;set_date(9);
+</pre>
+<p>
+でした。
+</p>
+<p>
+んで、この時、実は、set_date の<strong>第一引数に、自分自身、要するに、$date自身が渡ります</strong>。<br>
+ 9 は、第二引数となるのです。
+</p>
+<p>
+この第一引数（つまり、オブジェクト）を受け取るのが $self なわけです。<br><br>
+new の時にやった、別の書き方に似てますね。
+</p>
+<pre class="code">
+$obj = Hoge-&gt;new;
+</pre>
+<p>
+は、下と同じことでした。
+</p>
+<pre class="code">
+$obj = Hoge::new('Hoge');
+</pre>
+<p>
+先ほどの、オブジェクトの場合は、
+<pre class="code">
+main::set_date($date,9);
+</pre>
+<p>
+という感じですね。
+</p>
+<p>
+「オブジェクト-&gt;サブルーチン」は、「<strong>オブジェクトが関連付けられているパッケージのサブルーチンを実行する。その際、第一引数には、オブジェクト自身が渡る</strong>」てわけです。
+</p>
+<p>
+次に、年月日を頂くものを、ぱーっと作っちゃいましょう。
+</p>
+<pre class=code>
+sub get_year{
+  my $self= shift;
+  return $self-&gt;{year};
+}
+
+sub get_month{
+  my $self= shift;
+  return $self-&gt;{month};
+}
+
+sub get_day{
+  my $self= shift;
+  return $self-&gt;{day};
+}
+</pre>
+<p>
+では、くっつけます。
+</p>
+<pre class=code>
+#!/usr/bin/perl
+
+package main;
+
+my $date = main-&gt;new;
+
+$date-&gt;set_date(9);
+print $date-&gt;get_year,$date-&gt;get_month,$date-&gt;get_day;
+
+sub new {
+  my $pkg = shift;
+  bless{
+    year => undef,
+    day  => undef,
+    month=> undef,
+  },$pkg
+}
+
+sub set_date{
+  my $self = shift;
+  my $time_deference = shift;
+  ($self-&gt;{year},$self-&gt;{month},$self-&gt;{day}) = ( gmtime time + $time_deference * 3600 )[5,4,3]
+  $self-&gt;{year} +=1900;
+  $self-&gt;{month}++;
+}
+
+sub get_year{
+  my $self= shift;
+  return $self-&gt;{year};
+}
+
+sub get_month{
+  my $self= shift;
+  return $self-&gt;{month};
+}
+
+sub get_day{
+  my $self= shift;
+  return $self-&gt;{day};
+}
+</pre>
+<p>
+ちなみに、このソースでは、$dateと、$selfは同じになります。説明聞いてきたら、分かりますよね？<br><br>
+だから、my $self = shift; を、全削除して、$self-&gt;サブルーチンの、$self-&gt; は消して、$self の代わりに、$dateとしても、ちゃんと動きます。
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+
+<a name="class"> </a>
+<h2>クラスとメソッド</h2>
+<p>
+でも、さっきみたいなのは、全然オブジェクト指向チックじゃないわけで。オブジェクト指向的な書き方をしている意味がありません。<br>
+では、さっきのプログラムを、myDateモジュールにしましょう。
+</p>
+<p>
+要は、myDate.pm というのを作るわけですが、
+package main;から、package myDate; に変更して、余計な物を切り捨てましょう。<br>
+余計な物は、mainパッケージに書きます（要するに、日付と関連するものをmyDateモジュールとして切り分ける）。
+</p>
+<pre class=code>
+package myDate;
+
+sub new {
+  my $pkg = shift;
+  bless{
+    year => undef,
+    day  => undef,
+    month=> undef,
+  },$pkg
+}
+
+sub set_date{
+  my $self = shift;
+  my $time_deference = shift;
+  ($self-&gt;{year},$self-&gt;{month},$self-&gt;{day}) = ( gmtime time + $time_deference * 3600 )[5,4,3]
+  $self-&gt;{year} +=1900;
+  $self-&gt;{month}++;
+}
+
+sub get_year{
+  my $self= shift;
+  return $self-&gt;{year};
+}
+
+sub get_month{
+  my $self= shift;
+  return $self-&gt;{month};
+}
+
+sub get_day{
+  my $self= shift;
+  return $self-&gt;{day};
+}
+
+1;
+</pre>
+<p>
+では、main パッケージ。
+</p>
+<pre class=code>
+#!/usr/bin/perl
+
+package main;
+
+use myDate;
+
+$date = myDate-&gt;new;
+$date-&gt;set_date(9);
+print $date-&gt;get_year,$date-&gt;get_month,$date-&gt;get_day;
+
+</pre>
+<p>
+で、「題と何か関係あるのか？」ってことですが。<br><br>
+
+オブジェクトは、パッケージ名と関連付けられたリファレンスです。<br>
+<br>
+パッケージのことをクラスと呼んでも差し支えない（ように作れば…）。<br>
+$date は、Dateクラスと関連付けられたリファレンス（＝オブジェクト）。<br>
+で、myDateクラスのオブジェクトである、$dateは、myDateクラスのメソッドを使えます。<br>
+で、メソッドとは、クラスのサブルーチンのことです。
+</p>
+<p class="note">
+パッケージ　＝　クラス<br>
+パッケージのサブルーチン　＝　クラスのメソッド
+</p>
+<p>
+要は、ちょっとそれっぽく呼び方を変えただけなんですよ、えぇ（ぉ
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+<a name="objective"> </a>
+<h2>オブジェクト指向</h2>
+<p>
+で、そろそろ、無謀にも概念を書いてみます。<br><br>
+よく、乗り物クラスがあって、その下に、潜水艦クラスとか、
+自動車クラスとか、と説明されてわかったようなわからんような気になるのですが。
+<br><br>
+ここに、自動車工場（クラス）があったとします。自動車生成ボタン（コンストラクタ）を押すと、自動車（オブジェクト）が出てきます。
+自動車ですから、前に進むことやクラクションを鳴らすこと(メソッド)が出来ます。荷物を積むことや自分の位置情報などもわかります(リファレンスに値を入れる)。
+<br><br>
+もう一つ自動車が欲しいと思ったら、もう一度、ボタンを押すと（コンストラクタ）、
+また別の自動車（オブジェクト）が出てきます。
+<br><br>
+その自動車（オブジェクト）の持っているものは、その自動車の持ち物ですから、他から干渉されません（カプセル化）。
+自動車工場の中にあるもの（名前空間内のグローバル変数なんか）を、変更したら、これは、自動車全部に影響します（それでも、一応、名前空間内に影響はとどまる）。
+たとえば、工場内に駐車場(名前空間内のグローバル変数)があるとすると、駐車（メソッド）すると、駐車場の空きが減るという仕組みも出来る。
+<br><br>
+とは、言っても、Perlのカプセル化は、ガチガチではないので、
+カプセルの中に入ることができます。以下のことは、あんまりやってはいけないことです。
+<br><br>
+1.'_'で始まるメソッド(サブルーチン)は、そのクラスの外部から、-&gt;で呼ばない。 <br>
+2.オブジェクトの持つ値(リファレンスの値)を直接いじらない。<br>
+3.クラスの名前空間内のグローバル変数をいじらない。
+<br><br>
+1は、main パッケージから、$obj-&gt;_hoge; などとは呼ばない。<br>
+2は、main パッケージから、$obj-&gt;{hoge} = "bar"; のようには、操作しない。<br>
+3は、$package_name::hoge = "bar";のように、操作しない。<br>
+<br>
+利点なんですが、作業自体は共通だけど、扱うデータは違うというときなど。
+車を動かすということ自体は同じなのだが、扱う車が別々である場合。
+こういうときに、オブジェクト(データのイレモノ)を生成して、共通の作業(メソッド)を行えばいいですね。
+<br><br>
+んーやっぱりわかりにくいかも。オブジェクトは、人にたとえたほうがわかりやすいんじゃないかと思う。
+<br><br>
+僕とあなた同じ「人間」だと思いますが、それぞれ違う「個人」です。同じ「人間」ですから、食う・寝る・遊ぶなんてことは、同じようにできるわけです。
+ただ、同じようなこと（メソッド）はできても、それぞれ違う「個人」（オブジェクト）。<br>
+「同じ『人間』（クラス）の仲間じゃねぇか」っても、見知らぬ人（オブジェクト）に金貸したりはしないわけで…僕は僕、あなたはあなたで、カプセル化されているってなわけです。
+<br><br>
+で、僕は、ただの人なので、特殊なことはできませんが、パン屋さん(クラス)の店員(オブジェクト)は、パンを焼ける（メソッド）し、
+工務店(クラス)の大工さん(オブジェクト)は、家を建てたり（メソッド）もできるわけです。<br><br>
+僕らにとって、大事なのは、パンを食べることであって、パンがどのように焼けるかとか、家がどのように建てられるか、ってことは、
+別に知らなくてもいい。自分でパンを焼くと、家の中ごちゃごちゃになって、後片付けもしなきゃいけないし、てんやわんやの大騒ぎになってしまう。
+<br><br>
+だから、クラスのオブジェクトを使って、自分の周りはきれいなままで、色んなことをやってもらう。これがモジュールの利点ではないですかね？
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+
+
+<a name="obref"> </a>
+<h2>オブジェクトがリファレンスなら…</h2>
+<p>
+そーですね。こいつも、bless　出来ないことはない。<br><br>
+さっきのmyDateモジュール使いましょう。
+</p>
+<pre class="code">
+#!/usr/bin/perl
+
+package main;
+
+use myDate;
+
+my $Date = myDate-&gt;new;
+$Date = main-&gt;new($Date);
+
+print $Date-&gt;set_date(9);
+print $Date-&gt;date;
+
+sub new {
+  my $pkg = shift;
+  my $obj = shift;
+  bless $obj,$pkg;
+}
+
+sub date{
+  my $self =shift;
+  return $self-&gt;now_year(),$self-&gt;now_month(),$self-&gt;now_day()
+}
+</pre>
+<p>
+でも、アウトです。<br><br>
+<strong>bless の効果で、myDateクラスと関連付けられていたリファレンスは、
+mainパッケージと関連付けられたリファレンスになってしまいます</strong>。<br><br>
+<pre class="code">
+print ref $Date;
+</pre>
+<p>
+とすると、
+</p>
+<pre class="code">
+main
+</pre>
+<p>
+が返ってきます。<strong>$Date は、mainパッケージと関連付けられてしまい、myDateパッケージとは、無関係になります</strong>。<br><br>
+ですから、myDateパッケージの set_date, now_year, now_month, now_day などは呼べません。パッケージ違いです。<br><br>
+ただし…
+</p>
+<pre class="code">
+print $Date-&gt;{year};
+</pre>
+<p>
+は、大丈夫です。なぜなら、パッケージの関連付けは変わっても、リファレンス（ここでは、ハッシュリファレンス）は、相変わらず、そのままだからです。<br><br>
+まぁ、使えたところで意味はないんですが（この場合は）。<br><br>
+こういうのを見ると、<strong>bless が、リファレンスをパッケージと関連付けている</strong>ことがよく分かるんじゃないでしょうか？
+</p>
+<p>
+（ちなみに、意味のある場合）最初に bless したのが、クラスＡで、クラスＡを継承しているクラスＢで、オブジェクトをblessすると、
+クラスＢは、クラスＡを継承しているので、今までのメソッドは使えるし、クラスＢのメソッドも使えるし、オブジェクトの持ち物も使える。
+と、僕は、RPGのモジュールを書いてて、キャラクタのクラスチェンジ(パラメタは同じで、クラスによって技能が違う)に使えるなぁ、などと妄想してました（コードは進んでません）。
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+<a name="calc1"> </a>
+<h2>-&gt; を連続する</h2>
+<p>
+足し算モジュール、Plusクラスを作ってみましょう。
+いりそうなのは、次のメソッドくらいでしょうか。
+</p>
+<pre class="code">
+plus  .... 引数を足していく。
+result ... 結果を返す。
+clear .... 計算を白紙に戻す。
+</pre>
+<p>
+これで、コーディングしてみます。
+</p>
+<pre class="code">
+package Plus;
+
+sub new{
+  my $pkg = shift;
+  bless{
+    value => undef
+  },$pkg;
+}
+
+sub plus{
+  my $self = shift;
+  $self-&gt;{value} += shift;
+}
+
+sub result{
+  my $self = shift;
+  return $self-&gt;{value};
+}
+
+sub clear{
+  my $self;
+  $self-&gt;{value} = undef;
+}
+
+1;
+</pre>
+<p>
+では、main パッケージ。
+</p>
+<pre class="code">
+#!/usr/bin/perl
+
+package main;
+
+use Plus;
+
+$p = Plus-&gt;new;
+$p-&gt;plus(10);
+$p-&gt;plus(20);
+$p-&gt;plus(40);
+print $p-&gt;result;
+</pre>
+<p>
+一応、動きます<br><br>
+でも、足し算と言うからには、10 + 20 + 40  = 70 という感じにしてみたい。<br><br>
+plus メソッドをちょっと変更します。
+</p>
+<pre class="code">
+sub plus{
+  my $self = shift;
+  $self-&gt;{value} += shift;
+  return $self;
+}
+</pre>
+<p>
+return $self; を追加してみました、<strong>オブジェクトを返すようにした</strong>わけです。こうすると…
+</p>
+<pre class="code">
+#!/usr/bin/perl
+
+package main;
+
+use Plus;
+
+$p = Plus-&gt;;
+print $p-&gt;plus(10)-&gt;plus(20)-&gt;plus(40)-&gt;result;
+</pre>
+<p>
+これで、結果が出ます。<br><br>
+$p-&gt;plus(数字)を一つの単位としてみて、returnされる値($self つまり、 $p )を代入していってください。
+</p>
+<pre class="code">
+<font color=red>$p-&gt;plus(10)</font>-&gt;plus(20)-&gt;plus(40)-&gt;result;
+<font color=red>$p</font>-&gt;plus(20)-&gt;plus(40)-&gt;result;
+
+<font color=red>$p-&gt;plus(20)</font>-&gt;plus(40)-&gt;result;
+<font color=red>$p</font>-&gt;plus(40)-&gt;result;
+
+<font color=red>$p-&gt;plus(40)</font>-&gt;result;
+<font color=red>$p</font>-&gt;result;
+</pre>
+<p>
+というわけです。<br><br>
+ちなみに、plusメソッドが、複数の値を返しても、この場合は、スカラコンテキストで判断されますので、一番右の値が渡ることになります。<br><br>
+<strong>※この書き方は、返値に要注意です</strong>。
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+<a name="calc2"> </a>
+<h2>多重継承</h2>
+<p>
+足し算だけでは物足りないので、Plusクラスに加えて、掛け算を行う、Multiplyクラスを作ってみましょう。
+</p>
+<pre class="code">
+package Multiply;
+
+sub new{
+  my $pkg = shift;
+  bless{
+    value => undef
+  },$pkg;
+}
+
+sub multiply{
+  my $self = shift;
+  $self-&gt;{value} *= shift;
+  return $self;
+}
+
+sub result{
+  my $self = shift;
+  return $self-&gt;{value};
+}
+
+sub clear{
+  my $self;
+  $self-&gt;{value} = undef;
+}
+
+1;
+</pre>
+<p>
+なんか、Plusクラスとと同じメソッドがありますね。<br><br>
+折角ですから、myCalcクラスを作って、同じ物をまとめてみましょう。
+</p>
+<pre class="code">
+package myCalc;
+
+use base qw(myCalc::Plus myCalc::Multiply);
+
+sub new{
+  my $pkg = shift;
+  bless{
+    value => undef
+  },$pkg;
+}
+
+sub clear{
+  my $self = shift;
+  $self-&gt;{value} = undef;
+}
+
+sub result{
+  my $self = shift;
+  return $self-&gt;{value};
+}
+
+1;
+</pre>
+<p>
+さて、
+</p>
+<p class="note">
+use base qw(myCalc::Plus myCalc::Multiply);
+</p>
+</p>
+<p>
+に注意して下さい。これによって、<strong>myCalc::Plus と、myCalc::Multiply のメソッドを、継承</strong>しています。<br><br>
+共通の物を抜き取った、モジュールは、以下になります。
+</p>
+<p>
+myCalc::Plus クラス。
+</p>
+<pre class="code">
+package myCalc::Plus;
+
+sub plus{
+  my $self = shift;
+  $self-&gt;{value} += shift;
+  return $self;
+}
+
+1;
+</pre>
+<p>
+myCalc::Multiply クラス。
+</p>
+<pre class="code">
+package myCalc::Multiply;
+
+sub multiply{
+  my $self = shift;
+  $self-&gt;{value} *= shift;
+  return $self;
+}
+
+1;
+</pre>
+<p>
+main での処理。
+</p>
+<pre class="code">
+#!/usr/bin/perl
+
+package main;
+
+use myCalc;
+
+$c = myCalc-&gt;new;
+print $c-&gt;plus(10)-&gt;plus(20)-&gt;plus(40)-&gt;multiply(2)-&gt;result;
+</pre>
+<p>
+結果は、140 ですね（四則計算の順番とかは、考えてませんから）。<br><br>
+ちなみに、こういう場合、<strong>myCalc::Plus などの、"::" は、ディレクトリ</strong>をあわらしています。
+</p>
+<pre class="code">
+/current/
+    +
+    +- main.pl
+    +- myCalc.pm
+    +
+    +- /myCalc/
+          +
+          +- Plus.pm
+          +- Multiply.pm
+</pre>
+<p>
+という構成になります。
+</p>
+<p>
+ちなみに、use base で、２つ以上のモジュールを継承（多重継承）するのは、あんまりお奨めではありません。<br>
+今回のだったら、別に分けずに、myCalcクラスにくっつけちゃったほうがいいです。<br><br>
+じゃぁ、そうしろよ、って声もありそうですが、次の話があるもので。
+<br><br>
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+<a name="calc3"> </a>
+<h2>多重継承をやめる</h2>
+<p>
+この項目は、下記URLを参考にしています。
+<br><br>
+<a href="http://www.melma.com/mag/85/m00014785/a00000031.html">http://www.melma.com/mag/85/m00014785/a00000031.html</a>
+</p><p>
+多重継承をやめるためには、myCalc::Plus クラスのメソッドと、
+myCalc::Multiply クラスのメソッドを myCalc クラスに、<strong>Export (輸出)</strong> すればいいわけです。
+</p>
+<pre class="code">
+package myCalc;
+
+use myCalc::Plus;
+use myCalc::Multiply;
+
+sub new{
+  my $pkg = shift;
+  bless{
+    value => undef
+  },$pkg;
+}
+
+sub clear{
+  my $self = shift;
+  $self-&gt;{value} = undef;
+}
+
+sub result{
+  my $self = shift;
+  return $self-&gt;{value};
+}
+
+1;
+</pre>
+<p>
+myCalc::Plus クラス。
+</p>
+<pre class="code">
+package myCalc::Plus;
+
+use base qw(Exporter);
+@myCalc::Plus::EXPORT = qw(plus);
+
+sub plus{
+  my $self = shift;
+  $self-&gt;{value} += shift;
+  return $self;
+}
+
+1;
+</pre>
+<p>
+myCalc::Multiply クラス。
+</p>
+<pre class="code">
+package myCalc::Multiply;
+
+use base qw(Exporter);
+@myCalc::Multiply::EXPORT = qw(multiply);
+
+sub multiply{
+  my $self = shift;
+  $self-&gt;{value} *= shift;
+  return $self;
+}
+
+1;
+</pre>
+<p>
+これで、多重継承をせずに、同じことが出来ます。
+<p>
+但し、少々注意が必要です。<br><br>
+例えば、multiply というのは、ホントの計算は、do_multiply メソッドで行っているとします。
+</p>
+<pre class="code">
+package myCalc::Multiply;
+
+use base qw(Exporter);
+@myCalc::Multiply::EXPORT = qw(multiply);
+
+sub multiply{
+  my $self = shift;
+  $self-&gt;do_multiply(shift);
+  return $self;
+}
+
+sub do_multiply{
+  my $self = shift;
+  $self-&gt;{value} *= shift;
+}
+
+1;
+</pre>
+<p>
+この場合、<strong>multiply の $self は、myCalcに関連付けられたリファレンス＝オブジェクト</strong>です。<br>
+<strong>Exporterで myCalc に輸出されているのは、multiply だけ</strong>ですので、<strong>do_multiply は、myCalc::Multiply だけのメソッド</strong>です。<br><br>
+ですから、次のようなエラーが出ます。
+</p>
+<pre class="code">
+Can't locate object method "do_multiply" via package "myCalc" at myCalc/Multiply.pm line 8.
+</pre>
+<p>
+解決策は、do_multiplyメソッドも Export するか、$self-&gt;do_multiply(shift) という書き方はやめて、<br>
+単純に、do_multiply($self,shift) とするかです。
+</p>
+<div class="back">
+<a href="#top">▲ to Top</a>
+</div>
+<a name="calc4"> </a>
+<h2>多重継承をやめる(もう少し簡単に)</h2>
+<p>
+サブルーチン名や、グローバル変数名が、かぶらない自信がある場合は、以下の方法でもいいでしょう。
+</p>
+<p>
+クラス名と、モジュール名を別にします、というよりは、<strong>モジュール名を別にして、クラス名を統一</strong>します。
+</p>
+<pre class="code">
+myCalc.pm            myCalc
+myCalc/Plus.pm       myCalc::Plus
+myCalc/Multiply.pm   myCalc::Multiply
+</pre>
+<p>
+という、モジュール名と、パッケージ名でしたが。
+</p>
+<pre class="code">
+myCalc.pm            myCalc
+myCalc/Plus.pm       myCalc
+myCalc/Multiply.pm   myCalc
+</pre>
+<p>
+にしてしまいます。
+</p>
+<p>
+myCalc.pm
+</p>
+<pre class="code">
+package myCalc;
+
+sub new{
+  my $pkg = shift;
+  bless{
+    value => undef
+  },$pkg;
+}
+
+sub clear{
+  my $self = shift;
+  $self-&gt;{value} = undef;
+}
+
+sub result{
+  my $self = shift;
+  return $self-&gt;{value};
+}
+
+1;
+</pre>
+<p>
+myCalc/Plus.pm
+</p>
+<pre class="code">
+package myCalc;
+
+sub plus{
+  my $self = shift;
+  $self-&gt;{value} += shift;
+  return $self;
+}
+
+1;
+</pre>
+<p>
+myCalc/Multiply.pm
+</p>
+<pre class="code">
+package myCalc;
+
+sub multiply{
+  my $self = shift;
+  $self-&gt;{value} *= shift;
+  return $self;
+}
+
+1;
+</pre>
+<p>
+main はこうなります。
+</p>
+<pre class="code">
+#!/usr/bin/perl
+
+package main;
+
+use myCalc;
+use myCalc::Plus;
+use myCalc::Multiply;
+
+$c = myCalc-&gt;new;
+$c-&gt;plus(50)-&gt;multiply(10);
+</pre>
+<p>
+最初に書いたとおり、<strong>グローバル変数や、サブルーチン名の重複に、十分注意しないとい
